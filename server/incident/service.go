@@ -9,10 +9,12 @@ import (
 	"time"
 
 	pluginapi "github.com/mattermost/mattermost-plugin-api"
+
+	"github.com/mattermost/mattermost-server/v5/model"
+
 	"github.com/mattermost/mattermost-plugin-incident-response/server/bot"
 	"github.com/mattermost/mattermost-plugin-incident-response/server/config"
 	"github.com/mattermost/mattermost-plugin-incident-response/server/playbook"
-	"github.com/mattermost/mattermost-server/v5/model"
 )
 
 const (
@@ -145,7 +147,7 @@ func (s *ServiceImpl) OpenCreateIncidentDialog(commanderID, triggerID, postID, c
 
 // EndIncident completes the incident. It returns an ErrIncidentNotActive if the caller tries to
 // end an incident which is not active.
-func (s *ServiceImpl) EndIncident(incidentID string, userID string) error {
+func (s *ServiceImpl) EndIncident(incidentID, userID string) error {
 	incdnt, err := s.store.GetIncident(incidentID)
 	if err != nil {
 		return fmt.Errorf("failed to end incident: %w", err)
@@ -183,7 +185,7 @@ func (s *ServiceImpl) EndIncident(incidentID string, userID string) error {
 
 // OpenEndIncidentDialog opens a interactive dialog so the user can confirm an incident should
 // be ended.
-func (s *ServiceImpl) OpenEndIncidentDialog(incidentID string, triggerID string) error {
+func (s *ServiceImpl) OpenEndIncidentDialog(incidentID, triggerID string) error {
 	dialog := model.Dialog{
 		Title:            "Confirm End Incident",
 		SubmitLabel:      "Confirm",
@@ -222,7 +224,7 @@ func (s *ServiceImpl) GetIncidentIDForChannel(channelID string) string {
 }
 
 // IsCommander returns true if the userID is the commander for incidentID.
-func (s *ServiceImpl) IsCommander(incidentID string, userID string) bool {
+func (s *ServiceImpl) IsCommander(incidentID, userID string) bool {
 	incdnt, err := s.store.GetIncident(incidentID)
 	if err != nil {
 		return false
@@ -232,7 +234,7 @@ func (s *ServiceImpl) IsCommander(incidentID string, userID string) bool {
 
 // ChangeCommander processes a request from userID to change the commander for incidentID
 // to commanderID. Changing to the same commanderID is a no-op.
-func (s *ServiceImpl) ChangeCommander(incidentID string, userID string, commanderID string) error {
+func (s *ServiceImpl) ChangeCommander(incidentID, userID, commanderID string) error {
 	incidentToModify, err := s.store.GetIncident(incidentID)
 	if err != nil {
 		return err
@@ -272,7 +274,7 @@ func (s *ServiceImpl) ChangeCommander(incidentID string, userID string, commande
 
 // ModifyCheckedState checks or unchecks the specified checklist item
 // Indeponant, will not perform any actions if the checklist item is already in the given checked state
-func (s *ServiceImpl) ModifyCheckedState(incidentID, userID string, newState bool, checklistNumber int, itemNumber int) error {
+func (s *ServiceImpl) ModifyCheckedState(incidentID, userID string, newState bool, checklistNumber, itemNumber int) error {
 	incidentToModify, err := s.checklistItemParamsVerify(incidentID, userID, checklistNumber, itemNumber)
 	if err != nil {
 		return err
@@ -325,13 +327,16 @@ func (s *ServiceImpl) AddChecklistItem(incidentID, userID string, checklistNumbe
 }
 
 // RemoveChecklistItem removes the item at the given index from the given checklist
-func (s *ServiceImpl) RemoveChecklistItem(incidentID, userID string, checklistNumber int, itemNumber int) error {
+func (s *ServiceImpl) RemoveChecklistItem(incidentID, userID string, checklistNumber, itemNumber int) error {
 	incidentToModify, err := s.checklistItemParamsVerify(incidentID, userID, checklistNumber, itemNumber)
 	if err != nil {
 		return err
 	}
 
-	incidentToModify.Playbook.Checklists[checklistNumber].Items = append(incidentToModify.Playbook.Checklists[checklistNumber].Items[:itemNumber], incidentToModify.Playbook.Checklists[checklistNumber].Items[itemNumber+1:]...)
+	incidentToModify.Playbook.Checklists[checklistNumber].Items = append(
+		incidentToModify.Playbook.Checklists[checklistNumber].Items[:itemNumber],
+		incidentToModify.Playbook.Checklists[checklistNumber].Items[itemNumber+1:]...,
+	)
 
 	if err = s.store.UpdateIncident(incidentToModify); err != nil {
 		return fmt.Errorf("failed to update incident: %w", err)
@@ -344,7 +349,7 @@ func (s *ServiceImpl) RemoveChecklistItem(incidentID, userID string, checklistNu
 }
 
 // RenameChecklistItem changes the title of a specified checklist item
-func (s *ServiceImpl) RenameChecklistItem(incidentID, userID string, checklistNumber int, itemNumber int, newTitle string) error {
+func (s *ServiceImpl) RenameChecklistItem(incidentID, userID string, checklistNumber, itemNumber int, newTitle string) error {
 	incidentToModify, err := s.checklistItemParamsVerify(incidentID, userID, checklistNumber, itemNumber)
 	if err != nil {
 		return err
@@ -363,7 +368,7 @@ func (s *ServiceImpl) RenameChecklistItem(incidentID, userID string, checklistNu
 }
 
 // MoveChecklistItem moves a checklist item to a new location
-func (s *ServiceImpl) MoveChecklistItem(incidentID, userID string, checklistNumber int, itemNumber int, newLocation int) error {
+func (s *ServiceImpl) MoveChecklistItem(incidentID, userID string, checklistNumber, itemNumber, newLocation int) error {
 	incidentToModify, err := s.checklistItemParamsVerify(incidentID, userID, checklistNumber, itemNumber)
 	if err != nil {
 		return err
@@ -424,7 +429,7 @@ func (s *ServiceImpl) modificationMessage(userID, channelID, message string) err
 	return nil
 }
 
-func (s *ServiceImpl) checklistItemParamsVerify(incidentID, userID string, checklistNumber int, itemNumber int) (*Incident, error) {
+func (s *ServiceImpl) checklistItemParamsVerify(incidentID, userID string, checklistNumber, itemNumber int) (*Incident, error) {
 	incidentToModify, err := s.checklistParamsVerify(incidentID, userID, checklistNumber)
 	if err != nil {
 		return nil, err

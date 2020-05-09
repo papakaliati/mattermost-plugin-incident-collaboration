@@ -23,6 +23,8 @@ const helpText = "###### Mattermost Incident Response Plugin - Slash Command Hel
 	"Learn more [in our documentation](https://mattermost.com/pl/default-incident-response-app-documentation). \n" +
 	""
 
+const confirmFlag = "CONFIRM"
+
 // Register is a function that allows the runner to register commands with the mattermost server.
 type Register func(*model.Command) error
 
@@ -115,15 +117,13 @@ func (r *Runner) actionEnd() {
 
 	err := r.incidentService.OpenEndIncidentDialog(incidentID, r.args.TriggerId)
 
-	if errors.Is(err, incident.ErrNotFound) {
+	switch {
+	case errors.Is(err, incident.ErrNotFound):
 		r.postCommandResponse("This channel is not associated with an incident.")
-		return
-	} else if errors.Is(err, incident.ErrIncidentNotActive) {
+	case errors.Is(err, incident.ErrIncidentNotActive):
 		r.postCommandResponse("This incident has already been closed.")
-		return
-	} else if err != nil {
+	case err != nil:
 		r.postCommandResponse(fmt.Sprintf("Error: %v", err))
-		return
 	}
 }
 
@@ -134,7 +134,7 @@ func (r *Runner) actionSelftest(args []string) {
 		return
 	}
 
-	if len(args) != 2 || args[0] != "CONFIRM" || args[1] != "SELF-TEST" {
+	if len(args) != 2 || args[0] != confirmFlag || args[1] != "SELF-TEST" {
 		r.postCommandResponse("Are you sure you want to self-test (which will nuke the database and delete all data -- instances, configuration)? " +
 			"All incident data will be lost. To self-test, type `/incident st CONFIRM SELF-TEST`")
 		return
@@ -244,12 +244,12 @@ func (r *Runner) actionSelftest(args []string) {
 	}
 	testPlaybook.ID = todeleteid
 	if err = r.playbookService.Delete(testPlaybook); err != nil {
-		r.postCommandResponse("There was an error while deleteing playbook. Err: " + err.Error())
+		r.postCommandResponse("There was an error while deleting playbook. Err: " + err.Error())
 		return
 	}
 
 	if deletedPlaybook, _ := r.playbookService.Get(todeleteid); deletedPlaybook.Title != "" {
-		r.postCommandResponse("Playbook should have been vaporised! Where's the kaboom? There was supposed to be an earth-shattering Kaboom!")
+		r.postCommandResponse("Playbook should have been vaporized! Where's the kaboom? There was supposed to be an earth-shattering Kaboom!")
 		return
 	}
 
@@ -266,17 +266,24 @@ func (r *Runner) actionSelftest(args []string) {
 		return
 	}
 
-	if err := r.incidentService.AddChecklistItem(createdIncident.ID, r.args.UserId, 0, playbook.ChecklistItem{Title: "I should be checked and second"}); err != nil {
+	if err := r.incidentService.AddChecklistItem(createdIncident.ID, r.args.UserId, 0, playbook.ChecklistItem{
+		Title: "I should be checked and second",
+	}); err != nil {
 		r.postCommandResponse("Unable to add checklist item: " + err.Error())
 		return
 	}
 
-	if err := r.incidentService.AddChecklistItem(createdIncident.ID, r.args.UserId, 0, playbook.ChecklistItem{Title: "I should be deleted"}); err != nil {
+	if err := r.incidentService.AddChecklistItem(createdIncident.ID, r.args.UserId, 0, playbook.ChecklistItem{
+		Title: "I should be deleted",
+	}); err != nil {
 		r.postCommandResponse("Unable to add checklist item: " + err.Error())
 		return
 	}
 
-	if err := r.incidentService.AddChecklistItem(createdIncident.ID, r.args.UserId, 0, playbook.ChecklistItem{Title: "I should not say this.", Checked: true}); err != nil {
+	if err := r.incidentService.AddChecklistItem(createdIncident.ID, r.args.UserId, 0, playbook.ChecklistItem{
+		Title:   "I should not say this.",
+		Checked: true,
+	}); err != nil {
 		r.postCommandResponse("Unable to add checklist item: " + err.Error())
 		return
 	}
@@ -296,7 +303,13 @@ func (r *Runner) actionSelftest(args []string) {
 		return
 	}
 
-	if err := r.incidentService.RenameChecklistItem(createdIncident.ID, r.args.UserId, 0, 1, "I should say this! and be unchecked and first!"); err != nil {
+	if err := r.incidentService.RenameChecklistItem(
+		createdIncident.ID,
+		r.args.UserId,
+		0,
+		1,
+		"I should say this! and be unchecked and first!",
+	); err != nil {
 		r.postCommandResponse("Unable to remove checklist item: " + err.Error())
 		return
 	}
@@ -316,7 +329,7 @@ func (r *Runner) actionNukeDB(args []string) {
 		return
 	}
 
-	if len(args) != 2 || args[0] != "CONFIRM" || args[1] != "NUKE" {
+	if len(args) != 2 || args[0] != confirmFlag || args[1] != "NUKE" {
 		r.postCommandResponse("Are you sure you want to nuke the database (delete all data -- instances, configuration)?" +
 			"All incident data will be lost. To nuke database, type `/incident nuke-db CONFIRM NUKE`")
 		return

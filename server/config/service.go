@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	pluginapi "github.com/mattermost/mattermost-plugin-api"
+
 	"github.com/mattermost/mattermost-server/v5/model"
 )
 

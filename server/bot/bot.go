@@ -2,8 +2,10 @@ package bot
 
 import (
 	pluginapi "github.com/mattermost/mattermost-plugin-api"
-	"github.com/mattermost/mattermost-plugin-incident-response/server/config"
+
 	"github.com/mattermost/mattermost-server/v5/model"
+
+	"github.com/mattermost/mattermost-plugin-incident-response/server/config"
 )
 
 // Bot stores the information for the plugin configuration, and implements the Poster and Logger

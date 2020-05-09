@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	pluginapi "github.com/mattermost/mattermost-plugin-api"
-	"github.com/mattermost/mattermost-plugin-incident-response/server/incident"
+
 	"github.com/mattermost/mattermost-server/v5/model"
+
+	"github.com/mattermost/mattermost-plugin-incident-response/server/incident"
 )
 
 // ErrNoPermissions if the error is caused by the user not having permissions

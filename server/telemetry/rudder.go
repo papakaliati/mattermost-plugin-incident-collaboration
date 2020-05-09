@@ -31,7 +31,7 @@ const (
 // dataPlaneURL with the writeKey, identified with the diagnosticID. The
 // version of the server is also sent with every event tracked.
 // If either diagnosticID or serverVersion are empty, an error is returned.
-func NewRudder(dataPlaneURL, writeKey, diagnosticID string, serverVersion string) (*RudderTelemetry, error) {
+func NewRudder(dataPlaneURL, writeKey, diagnosticID, serverVersion string) (*RudderTelemetry, error) {
 	if diagnosticID == "" {
 		return nil, fmt.Errorf("diagnosticID should not be empty")
 	}
@@ -52,40 +52,40 @@ func (t *RudderTelemetry) track(event string, properties map[string]interface{})
 	properties["PluginVersion"] = config.Manifest.Version
 	properties["ServerVersion"] = t.serverVersion
 
-	t.client.Enqueue(rudder.Track{
+	_ = t.client.Enqueue(rudder.Track{
 		UserId:     t.diagnosticID,
 		Event:      event,
 		Properties: properties,
 	})
 }
 
-func incidentProperties(incident *incident.Incident) map[string]interface{} {
+func incidentProperties(theIncident *incident.Incident) map[string]interface{} {
 	totalChecklistItems := 0
-	for _, checklist := range incident.Playbook.Checklists {
+	for _, checklist := range theIncident.Playbook.Checklists {
 		totalChecklistItems += len(checklist.Items)
 	}
 
 	return map[string]interface{}{
-		"ID":                  incident.ID,
-		"IsActive":            incident.IsActive,
-		"CommanderUserID":     incident.CommanderUserID,
-		"TeamID":              incident.TeamID,
-		"CreatedAt":           incident.CreatedAt,
-		"ChannelIDs":          incident.ChannelIDs,
-		"PostID":              incident.PostID,
-		"NumChecklists":       len(incident.Playbook.Checklists),
+		"ID":                  theIncident.ID,
+		"IsActive":            theIncident.IsActive,
+		"CommanderUserID":     theIncident.CommanderUserID,
+		"TeamID":              theIncident.TeamID,
+		"CreatedAt":           theIncident.CreatedAt,
+		"ChannelIDs":          theIncident.ChannelIDs,
+		"PostID":              theIncident.PostID,
+		"NumChecklists":       len(theIncident.Playbook.Checklists),
 		"TotalChecklistItems": totalChecklistItems,
 	}
 }
 
 // CreateIncident tracks the creation of the incident passed.
-func (t *RudderTelemetry) CreateIncident(incident *incident.Incident) {
-	t.track(eventCreateIncident, incidentProperties(incident))
+func (t *RudderTelemetry) CreateIncident(theIncident *incident.Incident) {
+	t.track(eventCreateIncident, incidentProperties(theIncident))
 }
 
 // EndIncident tracks the end of the incident passed.
-func (t *RudderTelemetry) EndIncident(incident *incident.Incident) {
-	t.track(eventEndIncident, incidentProperties(incident))
+func (t *RudderTelemetry) EndIncident(theIncident *incident.Incident) {
+	t.track(eventEndIncident, incidentProperties(theIncident))
 }
 
 func checklistItemProperties(incidentID, userID string) map[string]interface{} {
@@ -123,7 +123,7 @@ func (t *RudderTelemetry) ModifyCheckedState(incidentID, userID string, newState
 	}
 }
 
-// MoveChecklistItem tracks the movment of checklist items by the user
+// MoveChecklistItem tracks the movement of checklist items by the user
 // identified by userID in the incident identified by incidentID.
 func (t *RudderTelemetry) MoveChecklistItem(incidentID, userID string) {
 	t.track(eventMoveChecklistItem, checklistItemProperties(incidentID, userID))

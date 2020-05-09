@@ -9,20 +9,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	pluginapi "github.com/mattermost/mattermost-plugin-api"
-	mock_poster "github.com/mattermost/mattermost-plugin-incident-response/server/bot/mocks"
-	"github.com/mattermost/mattermost-plugin-incident-response/server/playbook"
-	"github.com/mattermost/mattermost-plugin-incident-response/server/pluginkvstore"
-	mock_pluginkvstore "github.com/mattermost/mattermost-plugin-incident-response/server/pluginkvstore/mocks"
+
+	"github.com/golang/mock/gomock"
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin/plugintest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	mock_poster "github.com/mattermost/mattermost-plugin-incident-response/server/bot/mocks"
+	"github.com/mattermost/mattermost-plugin-incident-response/server/playbook"
+	"github.com/mattermost/mattermost-plugin-incident-response/server/pluginkvstore"
+	mock_pluginkvstore "github.com/mattermost/mattermost-plugin-incident-response/server/pluginkvstore/mocks"
 )
 
-func jsonPlaybookReader(playbook playbook.Playbook) io.Reader {
-	jsonBytes, err := json.Marshal(playbook)
+func jsonPlaybookReader(p playbook.Playbook) io.Reader {
+	jsonBytes, err := json.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
@@ -98,6 +100,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
@@ -116,6 +120,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		result, err := ioutil.ReadAll(resp.Body)
 		assert.NoError(t, err)
@@ -147,6 +153,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		result, err := ioutil.ReadAll(resp.Body)
 		assert.NoError(t, err)
@@ -173,6 +181,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		result, err := ioutil.ReadAll(resp.Body)
 
@@ -210,6 +220,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		result, err := ioutil.ReadAll(resp.Body)
 
@@ -232,6 +244,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
@@ -249,6 +263,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
@@ -267,6 +283,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
@@ -284,6 +302,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
@@ -302,6 +322,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
@@ -316,6 +338,8 @@ func TestPlaybooks(t *testing.T) {
 		handler.ServeHTTP(testrecorder, testreq, "testpluginid")
 
 		resp := testrecorder.Result()
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 }

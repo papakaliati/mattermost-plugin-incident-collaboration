@@ -41,6 +41,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request, sourcePlugin
 	h.root.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), contextKey(PluginIDContextKey), sourcePluginID)))
 }
 
+// HandleOK writes a successful json payload into the response.
+func HandleOK(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{"status": "OK"}`))
+}
+
 // HandleError writes err as json into the response.
 func HandleError(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
@@ -64,7 +70,7 @@ func ReturnJSON(w http.ResponseWriter, pointerToObject interface{}) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(jsonBytes)
+	_, _ = w.Write(jsonBytes)
 }
 
 // HandleErrorWithCode writes code, errTitle and err as json into the response.

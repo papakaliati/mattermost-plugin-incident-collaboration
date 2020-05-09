@@ -29,7 +29,8 @@ type IncidentHandler struct {
 }
 
 // NewIncidentHandler Creates a new Plugin API handler.
-func NewIncidentHandler(router *mux.Router, incidentService incident.Service, playbookService playbook.Service, api *pluginapi.Client, poster bot.Poster) *IncidentHandler {
+func NewIncidentHandler(router *mux.Router, incidentService incident.Service, playbookService playbook.Service,
+	api *pluginapi.Client, poster bot.Poster) *IncidentHandler {
 	handler := &IncidentHandler{
 		incidentService: incidentService,
 		playbookService: playbookService,
@@ -147,7 +148,10 @@ func (h *IncidentHandler) createIncidentFromDialog(w http.ResponseWriter, r *htt
 		return
 	}
 
-	h.poster.PublishWebsocketEventToUser(incident.IncidentCreatedWSEvent, map[string]interface{}{"client_id": state.ClientID, "incident": newIncident}, request.UserId)
+	h.poster.PublishWebsocketEventToUser(incident.IncidentCreatedWSEvent, map[string]interface{}{
+		"client_id": state.ClientID,
+		"incident":  newIncident,
+	}, request.UserId)
 
 	if err := h.postIncidentCreatedMessage(newIncident, request.ChannelId); err != nil {
 		HandleError(w, err)
@@ -448,14 +452,14 @@ func (h *IncidentHandler) reorderChecklist(w http.ResponseWriter, r *http.Reques
 	_, _ = w.Write([]byte(`{"status": "OK"}`))
 }
 
-func (h *IncidentHandler) postIncidentCreatedMessage(incident *incident.Incident, channelID string) error {
-	channel, err := h.pluginAPI.Channel.Get(incident.ChannelIDs[0])
+func (h *IncidentHandler) postIncidentCreatedMessage(theIncident *incident.Incident, channelID string) error {
+	channel, err := h.pluginAPI.Channel.Get(theIncident.ChannelIDs[0])
 	if err != nil {
 		return err
 	}
 
-	msg := fmt.Sprintf("Incident %s started in ~%s", incident.Name, channel.Name)
-	h.poster.Ephemeral(incident.CommanderUserID, channelID, "%s", msg)
+	msg := fmt.Sprintf("Incident %s started in ~%s", theIncident.Name, channel.Name)
+	h.poster.Ephemeral(theIncident.CommanderUserID, channelID, "%s", msg)
 
 	return nil
 }
@@ -501,11 +505,14 @@ func parseIncidentsFilterOption(u *url.URL, teamID string) (*incident.HeaderFilt
 
 	param = u.Query().Get("order")
 	var order incident.SortDirection
-	if param == "asc" {
+	switch param {
+	case "asc":
 		order = incident.Asc
-	} else if param == "desc" || param == "" {
+	case "desc":
 		order = incident.Desc
-	} else {
+	case "":
+		order = incident.Desc
+	default:
 		return nil, fmt.Errorf("bad parameter 'order_by': %w", err)
 	}
 
