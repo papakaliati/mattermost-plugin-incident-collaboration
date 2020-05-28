@@ -1,16 +1,15 @@
-const exec = require('child_process').exec;
+import {exec} from 'child_process';
+import * as webpack from 'webpack'
+import * as path from 'path';
 
-const path = require('path');
+import manifest from './src/manifest.js';
 
-const NPM_TARGET = process.env.npm_lifecycle_event; //eslint-disable-line no-process-env
-let mode = 'production';
-let devtool = '';
-if (NPM_TARGET === 'development') {
-    mode = 'development';
-    devtool = 'source-map';
-}
+// buildTimestamp uniquely identifies CSS assets injected into the header. This same value is
+// then exposed as a global constant, allowing the plugin to unambiguously remove old assets
+// that can't be cleaned up on uninitialize.
+const buildTimestamp = Number(new Date());
 
-module.exports = {
+const config: webpack.Configuration = {
     entry: [
         './src/index.tsx',
     ],
@@ -41,7 +40,7 @@ module.exports = {
             {
                 test: /\.scss$/,
                 use: [
-                    'style-loader',
+                    {loader: 'style-loader', options: {attributes: {class: manifest.Id + '-style ' + buildTimestamp}}},
                     {
                         loader: 'css-loader',
                     },
@@ -67,9 +66,10 @@ module.exports = {
         publicPath: '/',
         filename: 'main.js',
     },
-    devtool,
-    mode,
     plugins: [
+        new webpack.DefinePlugin({
+            'BUILD_TIMESTAMP': buildTimestamp,
+        }),
         {
             apply: (compiler) => {
                 compiler.hooks.afterEmit.tap('AfterEmitPlugin', () => {
@@ -86,3 +86,11 @@ module.exports = {
         },
     ],
 };
+
+const NPM_TARGET = process.env.npm_lifecycle_event; //eslint-disable-line no-process-env
+if (NPM_TARGET === 'development') {
+    config.mode = 'development';
+    config.devtool = 'source-map';
+}
+
+export default config;

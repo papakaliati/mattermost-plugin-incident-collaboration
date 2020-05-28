@@ -75,3 +75,19 @@ export const registerCssVars = (theme: any) => {
     });
 };
 
+// cleanupCss removes all webpack-injected styles associated with this plugin.
+// If buildTimestamp is provided, styles tagged with that build timestamp are ignored. Otherwise
+// all styles associated with the plugin are removed.
+export const cleanupCss = (pluginId, buildTimestamp): void => {
+    const styleClassName = pluginId + '-style';
+
+    [...document.getElementsByClassName(styleClassName)].filter((elem) => {
+        if (!buildTimestamp) {
+            return true;
+        } else {
+            return !elem.classList.contains(buildTimestamp)
+        }
+    ).forEach((elem) =>
+        elem.parentNode.removeChild(elem)
+    );
+};
