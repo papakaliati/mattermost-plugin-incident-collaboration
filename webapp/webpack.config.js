@@ -42,9 +42,18 @@ module.exports = {
         alias: {
             src: path.resolve(__dirname, './src/'),
 
-            // components: path.resolve(__dirname, 'node_modules/mattermost-webapp/components/'),
-            // actions: path.resolve(__dirname, 'node_modules/mattermost-webapp/actions/'),
-            // utils: path.resolve(__dirname, 'node_modules/mattermost-webapp/utils/'),
+            components: path.resolve(__dirname, 'node_modules/mattermost-webapp/components/'),
+            actions: path.resolve(__dirname, 'node_modules/mattermost-webapp/actions/'),
+            utils: path.resolve(__dirname, 'node_modules/mattermost-webapp/utils/'),
+            stores: path.resolve(__dirname, 'node_modules/mattermost-webapp/stores/'),
+            store: path.resolve(__dirname, 'node_modules/mattermost-webapp/store/'),
+            selectors: path.resolve(__dirname, 'node_modules/mattermost-webapp/selectors/'),
+            reducers: path.resolve(__dirname, 'node_modules/mattermost-webapp/reducers/'),
+            plugins: path.resolve(__dirname, 'node_modules/mattermost-webapp/plugins/'),
+            images: path.resolve(__dirname, 'node_modules/mattermost-webapp/images/'),
+            i18n: path.resolve(__dirname, 'node_modules/mattermost-webapp/i18n/'),
+            dispatcher: path.resolve(__dirname, 'node_modules/mattermost-webapp/dispatcher/'),
+            client: path.resolve(__dirname, 'node_modules/mattermost-webapp/client/'),
         },
         modules: [
             'src',
@@ -92,6 +101,21 @@ module.exports = {
                                 includePaths: ['node_modules/compass-mixins/lib', 'sass'],
                             },
                         },
+                    },
+                ],
+            },
+            {
+                test: /\.(png|eot|tiff|svg|woff2|woff|ttf|gif|mp3|jpg)$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            name: 'files/[hash].[ext]',
+                        },
+                    },
+                    {
+                        loader: 'image-webpack-loader',
+                        options: {},
                     },
                 ],
             },
