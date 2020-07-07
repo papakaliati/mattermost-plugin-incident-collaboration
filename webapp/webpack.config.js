@@ -41,6 +41,10 @@ module.exports = {
     resolve: {
         alias: {
             src: path.resolve(__dirname, './src/'),
+
+            // components: path.resolve(__dirname, 'node_modules/mattermost-webapp/components/'),
+            // actions: path.resolve(__dirname, 'node_modules/mattermost-webapp/actions/'),
+            // utils: path.resolve(__dirname, 'node_modules/mattermost-webapp/utils/'),
         },
         modules: [
             'src',
@@ -53,6 +57,18 @@ module.exports = {
             {
                 test: /\.(js|jsx|ts|tsx)$/,
                 exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        cacheDirectory: true,
+
+                        // Babel configuration is in babel.config.js because jest requires it to be there.
+                    },
+                },
+            },
+            {
+                test: /\.(js|jsx|ts|tsx)$/,
+                include: /node_modules\/mattermost-webapp/,
                 use: {
                     loader: 'babel-loader',
                     options: {
@@ -88,6 +104,8 @@ module.exports = {
         'prop-types': 'PropTypes',
         'react-bootstrap': 'ReactBootstrap',
         'react-router-dom': 'ReactRouterDom',
+
+        //'mattermost-webapp': path.resolve(__dirname, 'node_modules/mattermost-webapp/'),
     },
     output: {
         devtoolNamespace: PLUGIN_ID,

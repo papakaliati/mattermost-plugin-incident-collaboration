@@ -6,6 +6,8 @@ import {Redirect, useParams, useLocation} from 'react-router-dom';
 
 import {Team} from 'mattermost-redux/types/teams';
 
+import Textbox from 'mattermost-webapp/components/textbox';
+
 import {teamPluginErrorUrl} from 'src/browser_routing';
 import {Playbook, Checklist, ChecklistItem, emptyPlaybook} from 'src/types/playbook';
 import {savePlaybook, clientFetchPlaybook} from 'src/client';
@@ -201,7 +203,7 @@ const PlaybookEdit: FC<Props> = (props: Props) => {
                 </div>
             </div>
             <div className='playbook-fields'>
-                <input
+                <Textbox
                     autoFocus={true}
                     id={'playbook-name'}
                     className='form-control input-name'
