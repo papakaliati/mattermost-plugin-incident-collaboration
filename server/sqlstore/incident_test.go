@@ -1,20 +1,15 @@
 package sqlstore
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 	"testing"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
-	mock_bot "github.com/mattermost/mattermost-plugin-incident-response/server/bot/mocks"
 	"github.com/mattermost/mattermost-plugin-incident-response/server/incident"
 	"github.com/mattermost/mattermost-plugin-incident-response/server/playbook"
-	mock_sqlstore "github.com/mattermost/mattermost-plugin-incident-response/server/sqlstore/mocks"
 	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/store/storetest"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -53,6 +48,7 @@ var (
 
 	inc01 = *NewBuilder().
 		WithName("incident 1 - wheel cat aliens wheelbarrow").
+		WithDescription("this is a description, not very long, but it can be up to 2048 bytes").
 		WithChannelID(channelID01).
 		WithIsActive(true).
 		WithCommanderUserID(commander1.UserID).
@@ -508,14 +504,14 @@ func TestGetIncidents(t *testing.T) {
 
 		createIncidents(incidentStore)
 
-		for _, test := range testData {
-			t.Run(driverName+" - "+test.Name, func(t *testing.T) {
-				result, err := incidentStore.GetIncidents(test.Options)
+		for _, testCase := range testData {
+			t.Run(driverName+" - "+testCase.Name, func(t *testing.T) {
+				result, err := incidentStore.GetIncidents(testCase.Options)
 
-				if test.ExpectedErr != nil {
+				if testCase.ExpectedErr != nil {
 					require.Nil(t, result)
 					require.Error(t, err)
-					require.Equal(t, test.ExpectedErr.Error(), err.Error())
+					require.Equal(t, testCase.ExpectedErr.Error(), err.Error())
 
 					return
 				}
@@ -529,11 +525,11 @@ func TestGetIncidents(t *testing.T) {
 				}
 
 				// remove the checklists from the expected incidents--we don't return them in getIncidents
-				for i := range test.Want.Items {
-					test.Want.Items[i].Checklists = []playbook.Checklist{}
+				for i := range testCase.Want.Items {
+					testCase.Want.Items[i].Checklists = []playbook.Checklist{}
 				}
 
-				require.Equal(t, test.Want, *result)
+				require.Equal(t, testCase.Want, *result)
 			})
 		}
 	}
@@ -611,18 +607,18 @@ func TestCreateAndGetIncident(t *testing.T) {
 			},
 		}
 
-		for _, test := range validIncidents {
-			t.Run(test.Name, func(t *testing.T) {
+		for _, testCase := range validIncidents {
+			t.Run(testCase.Name, func(t *testing.T) {
 				var expectedIncident incident.Incident
-				if test.Incident != nil {
-					expectedIncident = *test.Incident
+				if testCase.Incident != nil {
+					expectedIncident = *testCase.Incident
 				}
 
-				returned, err := incidentStore.CreateIncident(test.Incident)
+				returned, err := incidentStore.CreateIncident(testCase.Incident)
 
-				if test.ExpectedErr != nil {
+				if testCase.ExpectedErr != nil {
 					require.Error(t, err)
-					require.Equal(t, test.ExpectedErr.Error(), err.Error())
+					require.Equal(t, testCase.ExpectedErr.Error(), err.Error())
 					require.Nil(t, returned)
 					return
 				}
@@ -657,14 +653,19 @@ func TestGetIncident(t *testing.T) {
 				ID:          "nonexisting",
 				ExpectedErr: errors.New("incident with id 'nonexisting' does not exist: not found"),
 			},
+			{
+				Name:        "Get without ID",
+				ID:          "",
+				ExpectedErr: errors.New("ID cannot be empty"),
+			},
 		}
 
-		for _, test := range validIncidents {
-			t.Run(test.Name, func(t *testing.T) {
-				returned, err := incidentStore.GetIncident(test.ID)
+		for _, testCase := range validIncidents {
+			t.Run(testCase.Name, func(t *testing.T) {
+				returned, err := incidentStore.GetIncident(testCase.ID)
 
 				require.Error(t, err)
-				require.Equal(t, test.ExpectedErr.Error(), err.Error())
+				require.Equal(t, testCase.ExpectedErr.Error(), err.Error())
 				require.Nil(t, returned)
 			})
 		}
@@ -718,6 +719,15 @@ func TestUpdateIncident(t *testing.T) {
 				ExpectedErr: nil,
 			},
 			{
+				Name:     "new description",
+				Incident: NewBuilder().WithDescription("old description").ToIncident(),
+				Update: func(old incident.Incident) *incident.Incident {
+					old.Description = "new description"
+					return &old
+				},
+				ExpectedErr: nil,
+			},
+			{
 				Name:     "deleted",
 				Incident: NewBuilder().ToIncident(),
 				Update: func(old incident.Incident) *incident.Incident {
@@ -747,17 +757,17 @@ func TestUpdateIncident(t *testing.T) {
 			},
 		}
 
-		for _, test := range validIncidents {
-			t.Run(test.Name, func(t *testing.T) {
-				returned, err := incidentStore.CreateIncident(test.Incident)
+		for _, testCase := range validIncidents {
+			t.Run(testCase.Name, func(t *testing.T) {
+				returned, err := incidentStore.CreateIncident(testCase.Incident)
 				require.NoError(t, err)
-				expected := test.Update(*returned)
+				expected := testCase.Update(*returned)
 
 				err = incidentStore.UpdateIncident(expected)
 
-				if test.ExpectedErr != nil {
+				if testCase.ExpectedErr != nil {
 					require.Error(t, err)
-					require.Equal(t, test.ExpectedErr.Error(), err.Error())
+					require.Equal(t, testCase.ExpectedErr.Error(), err.Error())
 					return
 				}
 
@@ -935,20 +945,20 @@ func TestGetCommanders(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		for _, test := range cases {
-			t.Run(test.Name, func(t *testing.T) {
-				actual, actualErr := incidentStore.GetCommanders(test.Options)
+		for _, testCase := range cases {
+			t.Run(testCase.Name, func(t *testing.T) {
+				actual, actualErr := incidentStore.GetCommanders(testCase.Options)
 
-				if test.ExpectedErr != nil {
+				if testCase.ExpectedErr != nil {
 					require.NotNil(t, actualErr)
-					require.Equal(t, test.ExpectedErr.Error(), actualErr.Error())
+					require.Equal(t, testCase.ExpectedErr.Error(), actualErr.Error())
 					require.Nil(t, actual)
 					return
 				}
 
 				require.NoError(t, actualErr)
 
-				require.ElementsMatch(t, test.Expected, actual)
+				require.ElementsMatch(t, testCase.Expected, actual)
 			})
 		}
 	}
@@ -981,30 +991,6 @@ func TestNukeDB(t *testing.T) {
 			// TODO: test for playbooks and playbook members
 		})
 	}
-}
-
-var driverNames = []string{model.DATABASE_DRIVER_POSTGRES, model.DATABASE_DRIVER_MYSQL}
-
-func setupTestDB(t *testing.T, driverName string) *sqlx.DB {
-	t.Helper()
-
-	sqlSettings := storetest.MakeSqlSettings(driverName)
-
-	origDB, err := sql.Open(*sqlSettings.DriverName, *sqlSettings.DataSource)
-	require.NoError(t, err)
-
-	db := sqlx.NewDb(origDB, driverName)
-	if driverName == model.DATABASE_DRIVER_MYSQL {
-		db.MapperFunc(func(s string) string { return s })
-	}
-
-	t.Cleanup(func() {
-		err := db.Close()
-		require.NoError(t, err)
-		storetest.CleanupSqlSettings(sqlSettings)
-	})
-
-	return db
 }
 
 func setupServerSchema(t *testing.T, db *sqlx.DB) {
@@ -1113,55 +1099,7 @@ func setupServerSchema(t *testing.T, db *sqlx.DB) {
 }
 
 func setupIncidentStore(t *testing.T, db *sqlx.DB) incident.Store {
-	mockCtrl := gomock.NewController(t)
-
-	logger := mock_bot.NewMockLogger(mockCtrl)
-
-	kvAPI := mock_sqlstore.NewMockKVAPI(mockCtrl)
-	configAPI := mock_sqlstore.NewMockConfigurationAPI(mockCtrl)
-	pluginAPIClient := PluginAPIClient{
-		KV:            kvAPI,
-		Configuration: configAPI,
-	}
-
-	driverName := db.DriverName()
-	configAPI.EXPECT().
-		GetConfig().
-		Return(&model.Config{
-			SqlSettings: model.SqlSettings{DriverName: &driverName},
-		}).
-		Times(1)
-
-	builder := sq.StatementBuilder.PlaceholderFormat(sq.Question)
-	if driverName == model.DATABASE_DRIVER_POSTGRES {
-		builder = builder.PlaceholderFormat(sq.Dollar)
-	}
-
-	sqlStore := &SQLStore{
-		logger,
-		db,
-		builder,
-	}
-
-	kvAPI.EXPECT().
-		Get("v2_playbookindex", gomock.Any()).
-		SetArg(1, oldPlaybookIndex{}).
-		Times(1)
-
-	kvAPI.EXPECT().
-		Get("v2_all_headers", gomock.Any()).
-		SetArg(1, map[string]oldHeader{}).
-		Times(1)
-
-	currentSchemaVersion, err := sqlStore.GetCurrentVersion()
-	require.NoError(t, err)
-
-	if currentSchemaVersion.LT(LatestVersion()) {
-		err = sqlStore.Migrate(pluginAPIClient, currentSchemaVersion)
-		require.NoError(t, err)
-	}
-
-	return NewIncidentStore(pluginAPIClient, logger, sqlStore)
+	return NewIncidentStore(setupSQLStore(t, db))
 }
 
 // IncidentBuilder is a utility to build incidents with a default base.
@@ -1187,13 +1125,19 @@ func NewBuilder() *IncidentBuilder {
 			},
 			PostID:     model.NewId(),
 			PlaybookID: model.NewId(),
-			Checklists: []playbook.Checklist(nil),
+			Checklists: nil,
 		},
 	}
 }
 
 func (t *IncidentBuilder) WithName(name string) *IncidentBuilder {
 	t.Name = name
+
+	return t
+}
+
+func (t *IncidentBuilder) WithDescription(desc string) *IncidentBuilder {
+	t.Description = desc
 
 	return t
 }

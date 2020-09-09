@@ -11,12 +11,24 @@ var ErrNotFound = errors.New("not found")
 type Playbook struct {
 	ID                   string      `json:"id"`
 	Title                string      `json:"title"`
+	Description          string      `json:"description"`
 	TeamID               string      `json:"team_id"`
 	CreatePublicIncident bool        `json:"create_public_incident"`
 	CreateAt             int64       `json:"create_at"`
 	DeleteAt             int64       `json:"delete_at"`
 	Checklists           []Checklist `json:"checklists"`
 	MemberIDs            []string    `json:"member_ids"`
+}
+
+func (p Playbook) Clone() Playbook {
+	newPlaybook := p
+	var newChecklists []Checklist
+	for _, c := range p.Checklists {
+		newChecklists = append(newChecklists, c.Clone())
+	}
+	newPlaybook.Checklists = newChecklists
+	newPlaybook.MemberIDs = append([]string(nil), p.MemberIDs...)
+	return newPlaybook
 }
 
 // Checklist represents a checklist in a playbook
@@ -28,9 +40,7 @@ type Checklist struct {
 
 func (c Checklist) Clone() Checklist {
 	newChecklist := c
-	var newItems []ChecklistItem
-	newItems = append(newItems, c.Items...)
-	newChecklist.Items = newItems
+	newChecklist.Items = append([]ChecklistItem(nil), c.Items...)
 	return newChecklist
 }
 

@@ -35,6 +35,7 @@ var migrations = []Migration{
 					CREATE TABLE IF NOT EXISTS IR_Incident (
 						ID VARCHAR(26) PRIMARY KEY,
 						Name VARCHAR(1024) NOT NULL,
+						Description VARCHAR(4096) NOT NULL,
 						IsActive BOOLEAN NOT NULL,
 						CommanderUserID VARCHAR(26) NOT NULL,
 						TeamID VARCHAR(26) NOT NULL,
@@ -58,13 +59,14 @@ var migrations = []Migration{
 					CREATE TABLE IF NOT EXISTS IR_Playbook (
 						ID VARCHAR(26) PRIMARY KEY,
 						Title VARCHAR(1024) NOT NULL,
+						Description VARCHAR(4096) NOT NULL,
 						TeamID VARCHAR(26) NOT NULL,
 						CreatePublicIncident BOOLEAN NOT NULL,
 						CreateAt BIGINT NOT NULL,
 						DeleteAt BIGINT NOT NULL DEFAULT 0,
 						ChecklistsJSON TEXT NOT NULL,
-						Stages BIGINT NOT NULL DEFAULT 0,
-						Steps BIGINT NOT NULL DEFAULT 0,
+						NumStages BIGINT NOT NULL DEFAULT 0,
+						NumSteps BIGINT NOT NULL DEFAULT 0,
 						INDEX IR_Playbook_TeamID (TeamID),
 						INDEX IR_PlaybookMember_PlaybookID (ID)
 					)
@@ -93,6 +95,7 @@ var migrations = []Migration{
 					CREATE TABLE IF NOT EXISTS IR_Incident (
 						ID TEXT PRIMARY KEY,
 						Name TEXT NOT NULL,
+						Description TEXT NOT NULL,
 						IsActive BOOLEAN NOT NULL,
 						CommanderUserID TEXT NOT NULL,
 						TeamID TEXT NOT NULL,
@@ -113,13 +116,14 @@ var migrations = []Migration{
 					CREATE TABLE IF NOT EXISTS IR_Playbook (
 						ID TEXT PRIMARY KEY,
 						Title TEXT NOT NULL,
+						Description TEXT NOT NULL,
 						TeamID TEXT NOT NULL,
 						CreatePublicIncident BOOLEAN NOT NULL,
 						CreateAt BIGINT NOT NULL,
 						DeleteAt BIGINT NOT NULL DEFAULT 0,
 						ChecklistsJSON JSON NOT NULL,
-						Stages BIGINT NOT NULL DEFAULT 0,
-						Steps BIGINT NOT NULL DEFAULT 0
+						NumStages BIGINT NOT NULL DEFAULT 0,
+						NumSteps BIGINT NOT NULL DEFAULT 0
 					);
 				`); err != nil {
 					return errors.Wrapf(err, "failed creating table IR_Playbook")
@@ -128,7 +132,8 @@ var migrations = []Migration{
 				if _, err := e.Exec(`
 					CREATE TABLE IF NOT EXISTS IR_PlaybookMember (
 						PlaybookID TEXT NOT NULL REFERENCES IR_Playbook(ID),
-						MemberID TEXT NOT NULL
+						MemberID TEXT NOT NULL,
+						UNIQUE (PlaybookID, MemberID)
 					);
 				`); err != nil {
 					return errors.Wrapf(err, "failed creating table IR_PlaybookMember")

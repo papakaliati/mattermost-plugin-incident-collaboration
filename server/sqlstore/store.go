@@ -95,6 +95,11 @@ type execer interface {
 	DriverName() string
 }
 
+type queryExecer interface {
+	queryer
+	execer
+}
+
 // exec executes the given query using positional arguments, automatically rebinding for the db.
 func (sqlStore *SQLStore) exec(e execer, sqlString string, args ...interface{}) (sql.Result, error) {
 	sqlString = sqlStore.db.Rebind(sqlString)
@@ -109,4 +114,12 @@ func (sqlStore *SQLStore) execBuilder(e execer, b builder) (sql.Result, error) {
 	}
 
 	return sqlStore.exec(e, sqlString, args...)
+}
+
+// finalizeTransaction ensures a transaction is closed after use, rolling back if not already committed.
+func (sqlStore *SQLStore) finalizeTransaction(tx *sqlx.Tx) {
+	// Rollback returns sql.ErrTxDone if the transaction was already closed.
+	if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+		sqlStore.log.Errorf("Failed to rollback transaction; err: %v", err)
+	}
 }
