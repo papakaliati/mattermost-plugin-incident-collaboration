@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 
@@ -317,85 +318,10 @@ func (r *Runner) actionSelftest(args []string) {
 		return
 	}
 
-	shortDescription := "A short description."
-	longDescription := `A very long description describing the item in a very descriptive way. Now with Markdown syntax! We have *italics* and **bold**. We have [external](http://example.com) and [internal links](/ad-1/com.mattermost.plugin-incident-response/playbooks). We have even links to channels: ~town-square. And links to users: @sysadmin, @user-1. We do have the usual headings and lists, of course:
-## Unordered List
-- One
-- Two
-- Three
-
-### Ordered List
-1. One
-2. Two
-3. Three
-
-We also have images:
-
-![Mattermost logo](/static/icon_152x152.png)
-
-And... yes, of course, we have emojis
-
-:muscle: :sunglasses: :tada: :confetti_ball: :balloon: :cowboy_hat_face: :nail_care:`
-
-	testPlaybook := playbook.Playbook{
-		Title:  "testing playbook",
-		TeamID: r.args.TeamId,
-		Checklists: []playbook.Checklist{
-			{
-				Title: "Identification",
-				Items: []playbook.ChecklistItem{
-					{
-						Title:       "Create Jira ticket",
-						Description: longDescription,
-					},
-					{
-						Title: "Add on-call team members",
-						State: playbook.ChecklistItemStateClosed,
-					},
-					{
-						Title:       "Identify blast radius",
-						Description: shortDescription,
-					},
-					{
-						Title: "Identify impacted services",
-					},
-					{
-						Title: "Collect server data logs",
-					},
-					{
-						Title: "Identify blast Analyze data logs",
-					},
-				},
-			},
-			{
-				Title: "Resolution",
-				Items: []playbook.ChecklistItem{
-					{
-						Title: "Align on plan of attack",
-					},
-					{
-						Title: "Confirm resolution",
-					},
-				},
-			},
-			{
-				Title: "Analysis",
-				Items: []playbook.ChecklistItem{
-					{
-						Title: "Writeup root-cause analysis",
-					},
-					{
-						Title: "Review post-mortem",
-					},
-				},
-			},
-		},
-	}
-	playbookID, err := r.playbookService.Create(testPlaybook)
-	if err != nil {
-		r.postCommandResponse("There was an error while creating playbook. Err: " + err.Error())
-		return
-	}
+	pbook := r.addPlaybook("testing playbook", nil)
+	playbookID := pbook.ID
+	testPlaybook := pbook
+	testPlaybook.ID = ""
 
 	gotplaybook, err := r.playbookService.Get(playbookID)
 	if err != nil {
@@ -521,6 +447,184 @@ And... yes, of course, we have emojis
 	r.postCommandResponse("Self test success.")
 }
 
+func (r *Runner) addPlaybook(title string, memberIDs []string) playbook.Playbook {
+	shortDescription := "A short description."
+	longDescription := `A very long description describing the item in a very descriptive way. Now with Markdown syntax! We have *italics* and **bold**. We have [external](http://example.com) and [internal links](/ad-1/com.mattermost.plugin-incident-response/playbooks). We have even links to channels: ~town-square. And links to users: @sysadmin, @user-1. We do have the usual headings and lists, of course:
+## Unordered List
+- One
+- Two
+- Three
+
+### Ordered List
+1. One
+2. Two
+3. Three
+
+We also have images:
+
+![Mattermost logo](/static/icon_152x152.png)
+
+And... yes, of course, we have emojis
+
+:muscle: :sunglasses: :tada: :confetti_ball: :balloon: :cowboy_hat_face: :nail_care:`
+
+	testPlaybook := playbook.Playbook{
+		Title:  title,
+		TeamID: r.args.TeamId,
+		Checklists: []playbook.Checklist{
+			{
+				Title: "Identification",
+				Items: []playbook.ChecklistItem{
+					{
+						Title:       "Create Jira ticket",
+						Description: longDescription,
+					},
+					{
+						Title: "Add on-call team members",
+						State: playbook.ChecklistItemStateClosed,
+					},
+					{
+						Title:       "Identify blast radius",
+						Description: shortDescription,
+					},
+					{
+						Title: "Identify impacted services",
+					},
+					{
+						Title: "Collect server data logs",
+					},
+					{
+						Title: "Identify blast Analyze data logs",
+					},
+				},
+			},
+			{
+				Title: "Resolution",
+				Items: []playbook.ChecklistItem{
+					{
+						Title: "Align on plan of attack",
+					},
+					{
+						Title: "Confirm resolution",
+					},
+				},
+			},
+			{
+				Title: "Analysis",
+				Items: []playbook.ChecklistItem{
+					{
+						Title: "Writeup root-cause analysis",
+					},
+					{
+						Title: "Review post-mortem",
+					},
+				},
+			},
+		},
+		MemberIDs: memberIDs,
+	}
+	id, err := r.playbookService.Create(testPlaybook)
+	if err != nil {
+		r.postCommandResponse("There was an error while creating playbook. Err: " + err.Error())
+		return playbook.Playbook{}
+	}
+
+	testPlaybook.ID = id
+	return testPlaybook
+}
+
+func (r *Runner) addIncident(name string, pbook playbook.Playbook, memberIDs []string) {
+	commander := memberIDs[rand.Intn(len(memberIDs))]
+	createdIncident, err := r.incidentService.CreateIncident(&incident.Incident{
+		Header: incident.Header{
+			Name:            name,
+			TeamID:          r.args.TeamId,
+			CommanderUserID: commander,
+		},
+		Playbook: &pbook,
+	}, true)
+	if err != nil {
+		r.postCommandResponse("Unable to create test incident: " + err.Error())
+		return
+	}
+
+	for _, m := range memberIDs {
+		_, _ = r.pluginAPI.Channel.AddMember(createdIncident.PrimaryChannelID, m)
+	}
+}
+
+func (r *Runner) actionAddTestData(args []string) {
+	if r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting == nil ||
+		!*r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting {
+		r.postCommandResponse(helpText)
+		return
+	}
+
+	if !r.pluginAPI.User.HasPermissionTo(r.args.UserId, model.PERMISSION_MANAGE_SYSTEM) {
+		r.postCommandResponse("Running add test data is restricted to system administrators.")
+		return
+	}
+
+	if len(args) != 2 {
+		r.postCommandResponse("use: /incident addTestData [num of playbooks to add] [num of incidents to add]")
+		return
+	}
+
+	user1, err := r.pluginAPI.User.GetByUsername("user-1")
+	if err != nil {
+		r.postCommandResponse("run `make test-data` from the mattermost-server directory first")
+		return
+	}
+	aaron, err := r.pluginAPI.User.GetByUsername("aaron.medina")
+	if err != nil {
+		r.postCommandResponse("run `make test-data` from the mattermost-server directory first")
+		return
+	}
+	alice, err := r.pluginAPI.User.GetByUsername("alice.johnston")
+	if err != nil {
+		r.postCommandResponse("run `make test-data` from the mattermost-server directory first")
+		return
+	}
+	ben, err := r.pluginAPI.User.GetByUsername("benjamin.bennett")
+	if err != nil {
+		r.postCommandResponse("run `make test-data` from the mattermost-server directory first")
+		return
+	}
+	diana, err := r.pluginAPI.User.GetByUsername("diana.wells")
+	if err != nil {
+		r.postCommandResponse("run `make test-data` from the mattermost-server directory first")
+		return
+	}
+	jack, err := r.pluginAPI.User.GetByUsername("jack.wheeler")
+	if err != nil {
+		r.postCommandResponse("run `make test-data` from the mattermost-server directory first")
+		return
+	}
+	members := []string{user1.Id, aaron.Id, alice.Id, ben.Id, diana.Id, jack.Id}
+
+	numPbooks, err := strconv.Atoi(args[0])
+	if err != nil || numPbooks < 1 {
+		r.postCommandResponse("use: /incident addTestData [num of playbooks to add -- at least 1] [num of incidents to add -- at least 1]")
+		return
+	}
+	numIncidents, err := strconv.Atoi(args[1])
+	if err != nil || numIncidents < 1 {
+		r.postCommandResponse("use: /incident addTestData [num of playbooks to add -- at least 1] [num of incidents to add -- at least 1]")
+		return
+	}
+
+	pbooks := make([]playbook.Playbook, 0, numPbooks)
+	for i := 0; i < numPbooks; i++ {
+		p := r.addPlaybook("Playbook "+model.NewId(), members)
+		pbooks = append(pbooks, p)
+	}
+
+	for i := 0; i < numIncidents; i++ {
+		p := pbooks[rand.Intn(len(pbooks))]
+		r.addIncident("Incident "+model.NewId(), p, members)
+	}
+}
+
 func (r *Runner) actionNukeDB(args []string) {
 	if r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting == nil ||
 		!*r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting {
@@ -581,6 +685,8 @@ func (r *Runner) Execute() error {
 		r.actionNukeDB(parameters)
 	case "st":
 		r.actionSelftest(parameters)
+	case "test-data":
+		r.actionAddTestData(parameters)
 	default:
 		r.postCommandResponse(helpText)
 	}
