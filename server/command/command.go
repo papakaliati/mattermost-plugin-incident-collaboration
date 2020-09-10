@@ -625,6 +625,41 @@ func (r *Runner) actionAddTestData(args []string) {
 	}
 }
 
+func (r *Runner) actionAddPlaybookWithoutChecklist(args []string) {
+	if r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting == nil ||
+		!*r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting {
+		r.postCommandResponse(helpText)
+		return
+	}
+
+	if !r.pluginAPI.User.HasPermissionTo(r.args.UserId, model.PERMISSION_MANAGE_SYSTEM) {
+		r.postCommandResponse("Running add test data is restricted to system administrators.")
+		return
+	}
+
+	user1, err := r.pluginAPI.User.GetByUsername("user-1")
+	if err != nil {
+		r.postCommandResponse("run `make test-data` from the mattermost-server directory first")
+		return
+	}
+	members := []string{user1.Id}
+
+	pbook := playbook.Playbook{
+		Title:     "example playbook",
+		TeamID:    r.args.TeamId,
+		MemberIDs: members,
+	}
+
+	id, err := r.playbookService.Create(pbook)
+	if err != nil {
+		r.postCommandResponse("There was an error while creating playbook. Err: " + err.Error())
+		return
+	}
+	pbook.ID = id
+
+	r.addIncident("Incident "+model.NewId(), pbook, members)
+}
+
 func (r *Runner) actionNukeDB(args []string) {
 	if r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting == nil ||
 		!*r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting {
@@ -687,6 +722,8 @@ func (r *Runner) Execute() error {
 		r.actionSelftest(parameters)
 	case "test-data":
 		r.actionAddTestData(parameters)
+	case "test-data-no-checklist":
+		r.actionAddPlaybookWithoutChecklist(parameters)
 	default:
 		r.postCommandResponse(helpText)
 	}
