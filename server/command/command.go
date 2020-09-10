@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mattermost/mattermost-plugin-incident-response/server/pluginkvstore"
 	"github.com/pkg/errors"
 
 	"github.com/mattermost/mattermost-plugin-incident-response/server/bot"
@@ -533,7 +534,7 @@ And... yes, of course, we have emojis
 	return testPlaybook
 }
 
-func (r *Runner) addIncident(name string, pbook playbook.Playbook, memberIDs []string) {
+func (r *Runner) addIncident(name string, pbook *playbook.Playbook, memberIDs []string) {
 	commander := memberIDs[rand.Intn(len(memberIDs))]
 	createdIncident, err := r.incidentService.CreateIncident(&incident.Incident{
 		Header: incident.Header{
@@ -541,7 +542,7 @@ func (r *Runner) addIncident(name string, pbook playbook.Playbook, memberIDs []s
 			TeamID:          r.args.TeamId,
 			CommanderUserID: commander,
 		},
-		Playbook: &pbook,
+		Playbook: pbook,
 	}, true)
 	if err != nil {
 		r.postCommandResponse("Unable to create test incident: " + err.Error())
@@ -621,11 +622,14 @@ func (r *Runner) actionAddTestData(args []string) {
 
 	for i := 0; i < numIncidents; i++ {
 		p := pbooks[rand.Intn(len(pbooks))]
-		r.addIncident("Incident "+model.NewId(), p, members)
+		r.addIncident("Incident "+model.NewId(), &p, members)
 	}
 }
 
-func (r *Runner) actionAddPlaybookWithoutChecklist(args []string) {
+// actionAddOldStyleIncidents adds a playbook with no checklists, and an incident with no playbook
+// because this used to be valid in earlier versions of the plugin, and we have to deal with
+// migrating those.
+func (r *Runner) actionAddOldStyleIncidents(args []string) {
 	if r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting == nil ||
 		!*r.pluginAPI.Configuration.GetConfig().ServiceSettings.EnableTesting {
 		r.postCommandResponse(helpText)
@@ -657,7 +661,20 @@ func (r *Runner) actionAddPlaybookWithoutChecklist(args []string) {
 	}
 	pbook.ID = id
 
-	r.addIncident("Incident "+model.NewId(), pbook, members)
+	r.addIncident("Incident "+model.NewId(), &pbook, members)
+
+	store := pluginkvstore.NewIncidentStore(pluginkvstore.NewClient(r.pluginAPI), r.logger)
+	if _, err := store.CreateIncident(&incident.Incident{
+		Header: incident.Header{
+			Name:            "Incident with nil playbook",
+			TeamID:          r.args.TeamId,
+			CommanderUserID: user1.Id,
+		},
+		Playbook: nil,
+	}); err != nil {
+		r.postCommandResponse(err.Error())
+		return
+	}
 }
 
 func (r *Runner) actionNukeDB(args []string) {
@@ -722,8 +739,8 @@ func (r *Runner) Execute() error {
 		r.actionSelftest(parameters)
 	case "test-data":
 		r.actionAddTestData(parameters)
-	case "test-data-no-checklist":
-		r.actionAddPlaybookWithoutChecklist(parameters)
+	case "test-data-old-style":
+		r.actionAddOldStyleIncidents(parameters)
 	default:
 		r.postCommandResponse(helpText)
 	}
