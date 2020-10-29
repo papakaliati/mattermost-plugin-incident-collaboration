@@ -48,11 +48,30 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	p.handler.ServeHTTP(w, r, c.SourcePluginId)
 }
 
+func (p *Plugin) removeOldPlugin(pluginAPIClient *pluginapi.Client) error {
+	oldPluginID := "com.mattermost.plugin-incident-response"
+
+	_, err := pluginAPIClient.Plugin.GetPluginStatus(oldPluginID)
+	if err != nil && err.Error() == "not found" {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return pluginAPIClient.Plugin.Remove(oldPluginID)
+}
+
 // OnActivate Called when this plugin is activated.
 func (p *Plugin) OnActivate() error {
 	pluginAPIClient := pluginapi.NewClient(p.API)
 	p.config = config.NewConfigService(pluginAPIClient, manifest)
 	pluginapi.ConfigureLogrus(logrus.New(), pluginAPIClient)
+
+	if err := p.removeOldPlugin(pluginAPIClient); err != nil {
+		pluginAPIClient.Log.Error("we cannot ensure there is only one instance of Incident Management plugin running")
+	}
 
 	if !pluginapi.IsE20LicensedOrDevelopment(pluginAPIClient.Configuration.GetConfig(), pluginAPIClient.System.GetLicense()) {
 		return errors.New("a valid Mattermost Enterprise E20 license is required to use this plugin")
