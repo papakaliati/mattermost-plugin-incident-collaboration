@@ -192,12 +192,12 @@ func (h *IncidentHandler) createIncidentFromDialog(w http.ResponseWriter, r *htt
 	}
 
 	payloadIncident := incident.Incident{
-		CommanderUserID: request.UserId,
-		TeamID:          request.TeamId,
-		Name:            name,
-		Description:     description,
-		PostID:          state.PostID,
-		PlaybookID:      playbookID,
+		CreatorUserID: request.UserId,
+		TeamID:        request.TeamId,
+		Name:          name,
+		Description:   description,
+		PostID:        state.PostID,
+		PlaybookID:    playbookID,
 	}
 
 	newIncident, err := h.createIncident(payloadIncident, request.UserId)
@@ -260,13 +260,13 @@ func (h *IncidentHandler) createIncident(newIncident incident.Incident, userID s
 		return nil, errors.Wrap(incident.ErrMalformedIncident, "missing team id of incident")
 	}
 
-	if newIncident.CommanderUserID == "" {
-		return nil, errors.Wrap(incident.ErrMalformedIncident, "missing commander user id of incident")
+	if newIncident.CreatorUserID == "" {
+		return nil, errors.Wrap(incident.ErrMalformedIncident, "missing creator user id of incident")
 	}
 
-	// Commander should have permission to the team
-	if !permissions.CanViewTeam(newIncident.CommanderUserID, newIncident.TeamID, h.pluginAPI) {
-		return nil, errors.Wrap(incident.ErrPermission, "commander user does not have permissions for the team")
+	// Creator should have permission to the team
+	if !permissions.CanViewTeam(newIncident.CreatorUserID, newIncident.TeamID, h.pluginAPI) {
+		return nil, errors.Wrap(incident.ErrPermission, "creator user does not have permissions for the team")
 	}
 
 	public := true
@@ -894,7 +894,7 @@ func (h *IncidentHandler) postIncidentCreatedMessage(incdnt *incident.Incident, 
 	post := &model.Post{
 		Message: fmt.Sprintf("Incident %s started in ~%s", incdnt.Name, channel.Name),
 	}
-	h.poster.EphemeralPost(incdnt.CommanderUserID, channelID, post)
+	h.poster.EphemeralPost(incdnt.CreatorUserID, channelID, post)
 
 	return nil
 }

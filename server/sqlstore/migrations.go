@@ -413,6 +413,11 @@ var migrations = []Migration{
 				if err := addColumnToMySQLTable(e, "IR_Playbook", "DefaultCommanderEnabled", "BOOLEAN DEFAULT FALSE"); err != nil {
 					return errors.Wrapf(err, "failed adding column DefaultCommanderEnabled to table IR_Playbook")
 				}
+
+				if err := addColumnToMySQLTable(e, "IR_Incident", "CreatorUserID", "VARCHAR(26) DEFAULT ''"); err != nil {
+					return errors.Wrapf(err, "failed adding column CreatorUserID to table IR_Incident")
+				}
+
 			} else {
 				if err := addColumnToPGTable(e, "IR_Incident", "DefaultCommanderID", "TEXT DEFAULT ''"); err != nil {
 					return errors.Wrapf(err, "failed adding column DefaultCommanderID to table IR_Incident")
@@ -425,6 +430,14 @@ var migrations = []Migration{
 				if err := addColumnToPGTable(e, "IR_Playbook", "DefaultCommanderEnabled", "BOOLEAN DEFAULT FALSE"); err != nil {
 					return errors.Wrapf(err, "failed adding column DefaultCommanderEnabled to table IR_Playbook")
 				}
+
+				if err := addColumnToPGTable(e, "IR_Incident", "CreatorUserID", "VARCHAR(26) DEFAULT ''"); err != nil {
+					return errors.Wrapf(err, "failed adding column CreatorUserID to table IR_Incident")
+				}
+			}
+
+			if _, err := e.Exec("UPDATE IR_Incident SET CreatorUserID = CommanderUserID WHERE ConcatenatedInvitedUserIDs = ''"); err != nil {
+				return errors.Wrapf(err, "failed setting default value in column ConcatenatedInvitedUserIDs of table IR_Playbook")
 			}
 
 			return nil
