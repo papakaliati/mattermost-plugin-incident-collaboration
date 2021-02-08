@@ -16,7 +16,7 @@ import ProfileButton from 'src/components/profile/profile_button';
 
 interface Option {
     value: string;
-    label: JSX.Element|string;
+    label: JSX.Element | string;
     userId: string;
 }
 
@@ -160,7 +160,11 @@ export default function ProfileSelector(props: Props) {
     } else {
         target = (
             <button
-                onClick={toggleOpen}
+                onClick={() => {
+                    if (props.enableEdit) {
+                        toggleOpen();
+                    }
+                }}
                 className={props.placeholderButtonClass || 'IncidentFilter-button'}
             >
                 {props.placeholder}
