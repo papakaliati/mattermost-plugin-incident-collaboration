@@ -76,32 +76,35 @@ func (s *ServiceImpl) GetIncidents(requesterInfo RequesterInfo, options FilterOp
 	return s.store.GetIncidents(requesterInfo, options)
 }
 
-func (s *ServiceImpl) assignDefaultCommander(incdnt *Incident) error {
+func (s *ServiceImpl) getCommanderID(incdnt *Incident) (string, error) {
+	if incdnt.CreatorUserID == "" && incdnt.DefaultCommanderID == "" {
+		return "", fmt.Errorf("no creator ID nor default commander ID specified")
+	}
+
+	if incdnt.DefaultCommanderID == "" {
+		return incdnt.CreatorUserID, nil
+	}
+
 	if !s.pluginAPI.User.HasPermissionToTeam(incdnt.DefaultCommanderID, incdnt.TeamID, model.PERMISSION_LIST_TEAM_CHANNELS) {
-		return fmt.Errorf("default commander '%s' does not have permissions to incident's team '%s'", incdnt.DefaultCommanderID, incdnt.TeamID)
+		s.pluginAPI.Log.Warn("default commander specified, but it does not have permissions to incident's team", "userID", incdnt.DefaultCommanderID, "teamID", incdnt.TeamID)
+		return incdnt.CreatorUserID, nil
 	}
 
-	// If the default commander is not a member already, invite them
-	_, err := s.pluginAPI.Channel.GetMember(incdnt.ChannelID, incdnt.DefaultCommanderID)
-	if err != nil {
-		_, err = s.pluginAPI.Channel.AddMember(incdnt.ChannelID, incdnt.DefaultCommanderID)
-		if err != nil {
-			return fmt.Errorf("failed to invite default commander '%s' to incident's channel %s", incdnt.DefaultCommanderID, incdnt.ChannelID)
-		}
-	}
-
-	incdnt.CommanderUserID = incdnt.DefaultCommanderID
-	if err := s.store.UpdateIncident(incdnt); err != nil {
-		return errors.Wrapf(err, "failed to update incident")
-	}
-
-	s.poster.PublishWebsocketEventToChannel(incidentUpdatedWSEvent, incdnt, incdnt.ChannelID)
-
-	return nil
+	return incdnt.DefaultCommanderID, nil
 }
 
 // CreateIncident creates a new incident. userID is the user who initiated the CreateIncident.
 func (s *ServiceImpl) CreateIncident(incdnt *Incident, userID string, public bool) (*Incident, error) {
+	if incdnt.CommanderUserID == "" {
+		commanderUserID, err := s.getCommanderID(incdnt)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get the commander ID")
+		}
+
+		incdnt.CommanderUserID = commanderUserID
+		fmt.Println(incdnt.CommanderUserID)
+	}
+
 	// Try to create the channel first
 	channel, err := s.createIncidentChannel(incdnt, public)
 	if err != nil {
@@ -169,30 +172,23 @@ func (s *ServiceImpl) CreateIncident(incdnt *Incident, userID string, public boo
 		}
 	}
 
-	user, err := s.pluginAPI.User.Get(incdnt.CommanderUserID)
+	user, err := s.pluginAPI.User.Get(incdnt.CreatorUserID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to resolve user %s", incdnt.CommanderUserID)
+		return nil, errors.Wrapf(err, "failed to resolve user %s", incdnt.CreatorUserID)
 	}
 
-	if _, err = s.poster.PostMessage(channel.Id, "This incident has been started by @%s", user.Username); err != nil {
-		return nil, errors.Wrapf(err, "failed to post to incident channel")
-	}
-
-	if incdnt.DefaultCommanderID != "" {
-		if err := s.assignDefaultCommander(incdnt); err != nil {
-			if _, err = s.poster.PostMessage(channel.Id, "Failed to assign the commander configured in the playbook."); err != nil {
-				return nil, errors.Wrapf(err, "failed to post to incident channel")
-			}
-		}
-
-		user, err := s.pluginAPI.User.Get(incdnt.CommanderUserID)
+	startMessage := fmt.Sprintf("This incident has been started and is commanded by @%s.", user.Username)
+	if incdnt.CommanderUserID != incdnt.CreatorUserID {
+		commander, err := s.pluginAPI.User.Get(incdnt.CommanderUserID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to resolve user %s", incdnt.CommanderUserID)
 		}
 
-		if _, err = s.poster.PostMessage(channel.Id, "@%s is now the incident commander", user.Username); err != nil {
-			return nil, errors.Wrapf(err, "failed to post to incident channel")
-		}
+		startMessage = fmt.Sprintf("This incident has been started by @%s and is commanded by @%s.", user.Username, commander.Username)
+	}
+
+	if _, err = s.poster.PostMessage(channel.Id, startMessage); err != nil {
+		return nil, errors.Wrapf(err, "failed to post to incident channel")
 	}
 
 	if incdnt.PostID == "" {
