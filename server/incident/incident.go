@@ -32,7 +32,7 @@ type Incident struct {
 	ChannelID               string               `json:"channel_id"`
 	CreateAt                int64                `json:"create_at"` // Retrieved from incident channel
 	EndAt                   int64                `json:"end_at"`
-	DeleteAt                int64                `json:"delete_at"` // Retrieved from incidet channel
+	DeleteAt                int64                `json:"delete_at"` // Retrieved from incident channel
 	ActiveStage             int                  `json:"active_stage"`
 	ActiveStageTitle        string               `json:"active_stage_title"`
 	PostID                  string               `json:"post_id"`
@@ -296,7 +296,7 @@ type Service interface {
 	// RenameChecklistItem changes the title of a specified checklist item
 	RenameChecklistItem(incidentID, userID string, checklistNumber int, itemNumber int, newTitle, newCommand string) error
 
-	// MoveChecklistItem moves a checklist item from one position to anouther
+	// MoveChecklistItem moves a checklist item from one position to another
 	MoveChecklistItem(incidentID, userID string, checklistNumber int, itemNumber int, newLocation int) error
 
 	// GetChecklistAutocomplete returns the list of checklist items for incidentID to be used in autocomplete
