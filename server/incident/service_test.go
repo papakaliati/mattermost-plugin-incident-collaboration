@@ -36,8 +36,9 @@ func TestCreateIncident(t *testing.T) {
 
 		teamID := model.NewId()
 		incdnt := &incident.Incident{
-			Name:   "###",
-			TeamID: teamID,
+			CreatorUserID: "userid",
+			Name:          "###",
+			TeamID:        teamID,
 		}
 
 		store.EXPECT().CreateIncident(gomock.Any()).Return(incdnt, nil)
@@ -46,7 +47,7 @@ func TestCreateIncident(t *testing.T) {
 		s := incident.NewService(client, store, poster, logger, configService, scheduler, telemetryService)
 
 		_, err := s.CreateIncident(incdnt, "testUserID", true)
-		require.Equal(t, err, incident.ErrChannelDisplayNameInvalid)
+		require.Equal(t, incident.ErrChannelDisplayNameInvalid, err)
 	})
 
 	t.Run("invalid channel name has only invalid characters", func(t *testing.T) {
@@ -62,8 +63,9 @@ func TestCreateIncident(t *testing.T) {
 
 		teamID := model.NewId()
 		incdnt := &incident.Incident{
-			Name:   "###",
-			TeamID: teamID,
+			CreatorUserID: "userid",
+			Name:          "###",
+			TeamID:        teamID,
 		}
 
 		store.EXPECT().CreateIncident(gomock.Any()).Return(incdnt, nil)
@@ -72,7 +74,7 @@ func TestCreateIncident(t *testing.T) {
 		s := incident.NewService(client, store, poster, logger, configService, scheduler, telemetryService)
 
 		_, err := s.CreateIncident(incdnt, "testUserID", true)
-		require.Equal(t, err, incident.ErrChannelDisplayNameInvalid)
+		require.Equal(t, incident.ErrChannelDisplayNameInvalid, err)
 	})
 
 	t.Run("channel name already exists, fixed on second try", func(t *testing.T) {
@@ -88,9 +90,9 @@ func TestCreateIncident(t *testing.T) {
 
 		teamID := model.NewId()
 		incdnt := &incident.Incident{
-			Name:            "###",
-			TeamID:          teamID,
-			CommanderUserID: "user_id",
+			Name:          "###",
+			TeamID:        teamID,
+			CreatorUserID: "user_id",
 		}
 
 		store.EXPECT().CreateIncident(gomock.Any()).Return(incdnt, nil)
@@ -111,7 +113,7 @@ func TestCreateIncident(t *testing.T) {
 		store.EXPECT().UpdateIncident(gomock.Any()).Return(nil)
 		poster.EXPECT().PublishWebsocketEventToChannel("incident_updated", gomock.Any(), "channel_id")
 		pluginAPI.On("GetUser", "user_id").Return(&model.User{Id: "user_id", Username: "username"}, nil)
-		poster.EXPECT().PostMessage("channel_id", "This incident has been started by @%s", "username")
+		poster.EXPECT().PostMessage("channel_id", "This incident has been started and is commanded by @username.")
 
 		s := incident.NewService(client, store, poster, logger, configService, scheduler, telemetryService)
 

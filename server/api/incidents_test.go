@@ -74,11 +74,11 @@ func TestIncidents(t *testing.T) {
 			Times(1)
 
 		i := incident.Incident{
-			CommanderUserID: dialogRequest.UserId,
-			TeamID:          dialogRequest.TeamId,
-			Name:            "incidentName",
-			PlaybookID:      "playbookid1",
-			InvitedUserIDs:  []string{},
+			CreatorUserID:  dialogRequest.UserId,
+			TeamID:         dialogRequest.TeamId,
+			Name:           "incidentName",
+			PlaybookID:     "playbookid1",
+			InvitedUserIDs: []string{},
 		}
 		retI := i
 		retI.ChannelID = "channelID"
@@ -129,13 +129,13 @@ func TestIncidents(t *testing.T) {
 			Times(1)
 
 		i := incident.Incident{
-			CommanderUserID: dialogRequest.UserId,
-			TeamID:          dialogRequest.TeamId,
-			Name:            "incidentName",
-			Description:     "description",
-			PlaybookID:      withid.ID,
-			Checklists:      withid.Checklists,
-			InvitedUserIDs:  []string{},
+			CreatorUserID:  dialogRequest.UserId,
+			TeamID:         dialogRequest.TeamId,
+			Name:           "incidentName",
+			Description:    "description",
+			PlaybookID:     withid.ID,
+			Checklists:     withid.Checklists,
+			InvitedUserIDs: []string{},
 		}
 		retI := i
 		retI.ChannelID = "channelID"
@@ -471,12 +471,12 @@ func TestIncidents(t *testing.T) {
 		}
 
 		testIncident := incident.Incident{
-			CommanderUserID: "testUserID",
-			TeamID:          "testTeamID",
-			Name:            "incidentName",
-			PlaybookID:      withid.ID,
-			Checklists:      withid.Checklists,
-			InvitedUserIDs:  []string{},
+			CreatorUserID:  "testUserID",
+			TeamID:         "testTeamID",
+			Name:           "incidentName",
+			PlaybookID:     withid.ID,
+			Checklists:     withid.Checklists,
+			InvitedUserIDs: []string{},
 		}
 
 		playbookService.EXPECT().
@@ -519,9 +519,9 @@ func TestIncidents(t *testing.T) {
 		reset()
 
 		testIncident := incident.Incident{
-			CommanderUserID: "testUserID",
-			TeamID:          "testTeamID",
-			Name:            "incidentName",
+			CreatorUserID: "testUserID",
+			TeamID:        "testTeamID",
+			Name:          "incidentName",
 		}
 
 		retI := testIncident

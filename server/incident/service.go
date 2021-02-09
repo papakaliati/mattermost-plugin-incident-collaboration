@@ -179,8 +179,8 @@ func (s *ServiceImpl) CreateIncident(incdnt *Incident, userID string, public boo
 
 	startMessage := fmt.Sprintf("This incident has been started and is commanded by @%s.", user.Username)
 	if incdnt.CommanderUserID != incdnt.CreatorUserID {
-		commander, err := s.pluginAPI.User.Get(incdnt.CommanderUserID)
-		if err != nil {
+		commander, err2 := s.pluginAPI.User.Get(incdnt.CommanderUserID)
+		if err2 != nil {
 			return nil, errors.Wrapf(err, "failed to resolve user %s", incdnt.CommanderUserID)
 		}
 
