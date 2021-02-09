@@ -91,7 +91,7 @@ Cypress.Commands.add('apiStartIncident', ({teamId, playbookId, incidentName, com
         method: 'POST',
         body: {
             name: incidentName,
-            commander_user_id: commanderUserId,
+            creator_user_id: commanderUserId,
             team_id: teamId,
             playbook_id: playbookId,
         },
