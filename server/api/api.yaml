@@ -139,7 +139,7 @@ paths:
               type: object
               required:
                 - name
-                - commander_user_id
+                - creator_user_id
                 - team_id
                 - playbook_id
               properties:
@@ -151,7 +151,7 @@ paths:
                   type: string
                   description: The description of the incident.
                   example: There is one server in the EU cluster that is not responding since April 12.
-                commander_user_id:
+                creator_user_id:
                   type: string
                   description: The identifier of the user who is commanding the incident.
                   example: bqnbdf8uc0a8yz4i39qrpgkvtg
@@ -1321,6 +1321,25 @@ paths:
                     type: string
                     description: User ID of the playbook member.
                     example: ilh6s1j4yefbdhxhtlzt179i6m
+                invited_user_ids:
+                  description: The identifiers of all the users that will be automatically invited to the channel of the incidents created from this playbook.
+                  type: array
+                  items:
+                    type: string
+                    description: User ID of the member.
+                    example: 4lb2qg1pro27q0m277khzeajcq
+                invite_users_enabled:
+                  description: A boolean indicating if the users in the invited_user_ids list will be invited.
+                  type: bool
+                  example: false
+                default_commander_id:
+                  description: The identifier of the user that will be assigned as commander when the incident starts. This member will be automatically invited to the incident's channel.
+                  type: string
+                  example: sfrkwcfky35g5z8c6lhdj32pi3
+                default_commander_enabled:
+                  description: A boolean indicating if the member specified in default_commander_id will be assigned as commander.
+                  type: bool
+                  example: false
       x-codeSamples:
         - lang: curl
           source: |
@@ -1546,6 +1565,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Checklist"
+        invited_user_ids:
+          description: The identifiers of all the users that will be automatically invited to the incident's channel.
+          type: array
+          items:
+            type: string
+            description: User ID of the member.
+            example: 4lb2qg1pro27q0m277khzeajcq
+        default_commander_id:
+          description: The identifier of the user that will be assigned as commander when the incident starts. This member will be automatically invited to the incident's channel.
+          type: string
+          example: sfrkwcfky35g5z8c6lhdj32pi3
     IncidentMetadata:
       type: object
       properties:
@@ -1671,6 +1701,25 @@ components:
             type: string
             description: User ID of the playbook member.
             example: ilh6s1j4yefbdhxhtlzt179i6m
+        invited_user_ids:
+          description: The identifiers of all the users that will be automatically invited to the channel of the incidents created from this playbook.
+          type: array
+          items:
+            type: string
+            description: User ID of the member.
+            example: 4lb2qg1pro27q0m277khzeajcq
+        invite_users_enabled:
+          description: A boolean indicating if the users in the invited_user_ids list will be invited.
+          type: bool
+          example: false
+        default_commander_id:
+          description: The identifier of the user that will be assigned as commander when the incident starts. This user will be automatically invited to the incident's channel.
+          type: string
+          example: sfrkwcfky35g5z8c6lhdj32pi3
+        default_commander_enabled:
+          description: A boolean indicating if the member specified in default_commander_id will be assigned as commander.
+          type: bool
+          example: false
     PlaybookList:
       type: object
       properties:
