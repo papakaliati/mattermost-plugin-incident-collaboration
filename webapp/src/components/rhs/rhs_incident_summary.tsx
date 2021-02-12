@@ -15,6 +15,8 @@ import {
     renderView,
 } from 'src/components/rhs/rhs_shared';
 import LatestUpdate from 'src/components/rhs/latest_update';
+import InfoBadge from 'src/components/backstage/incidents/info_badge';
+import { DisplayStyle } from 'src/types/custom_property';
 
 interface Props {
     incident: Incident;
@@ -81,6 +83,31 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
                     </div>
                     <LatestUpdate statusPosts={props.incident.status_posts}/>
                 </div>
+
+                {props.incident.custom_properties.map((custom_property) => {
+                    return (
+                        <div className='first-title'>{custom_property.name}
+                            { custom_property.option.display_style === DisplayStyle.text && 
+                                <div>{custom_property.value}</div>
+                            }
+
+                            { custom_property.option.display_style === DisplayStyle.badge && 
+                                <InfoBadge
+                                    text= {custom_property.option.selected_option.value}
+                                    badge_style= {custom_property.option.selected_option.badge_style}
+                                    compact={true}/>
+                            }
+                        </div>
+                        );
+                })}
+
+                {props.incident.links.map((link) => {
+                    return (
+                        <div>
+                            <a href={link.name}>{link.url}</a>
+                        </div>
+                        );
+                })}
             </div>
         </Scrollbars>
     );
