@@ -1,11 +1,11 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {FC} from 'react';
+import React, { FC } from 'react';
 import Scrollbars from 'react-custom-scrollbars';
 
-import {fetchUsersInChannel, setCommander} from 'src/client';
-import {Incident, incidentCurrentStatus} from 'src/types/incident';
+import { fetchUsersInChannel, setCommander, setCustomPropertyValue } from 'src/client';
+import { Incident, incidentCurrentStatus } from 'src/types/incident';
 import ProfileSelector from 'src/components/profile/profile_selector';
 import Duration from '../duration';
 import './incident_details.scss';
@@ -15,8 +15,8 @@ import {
     renderView,
 } from 'src/components/rhs/rhs_shared';
 import LatestUpdate from 'src/components/rhs/latest_update';
-import InfoBadge from 'src/components/backstage/incidents/info_badge';
-import { DisplayStyle } from 'src/types/custom_property';
+import PropertySelector from '../property/property_selector';
+import { PropertyType } from 'src/types/playbook';
 
 interface Props {
     incident: Incident;
@@ -38,6 +38,14 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
         }
     };
 
+    const onSelectedPropertyChange = async (propertyId: string, valueId: string) => {
+        const response = await setCustomPropertyValue(props.incident.id, propertyId, valueId);
+        if (response.error) {
+            // TODO: Should be presented to the user? https://mattermost.atlassian.net/browse/MM-24271
+            console.log(response.error); // eslint-disable-line no-console
+        }
+    };
+
     return (
         <Scrollbars
             autoHide={true}
@@ -46,7 +54,7 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
             renderThumbHorizontal={renderThumbHorizontal}
             renderThumbVertical={renderThumbVertical}
             renderView={renderView}
-            style={{position: 'absolute'}}
+            style={{ position: 'absolute' }}
         >
             <div className='IncidentDetails'>
                 <div className='side-by-side'>
@@ -81,32 +89,41 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
                     <div className='title'>
                         {'Recent Update:'}
                     </div>
-                    <LatestUpdate statusPosts={props.incident.status_posts}/>
+                    <LatestUpdate statusPosts={props.incident.status_posts} />
                 </div>
 
-                {props.incident.custom_properties.map((custom_property) => {
+                {props.incident.propertylist.items.map((property) => {
                     return (
-                        <div className='first-title'>{custom_property.name}
-                            { custom_property.option.display_style === DisplayStyle.text && 
-                                <div>{custom_property.value}</div>
+                        <div className='inner-container first-container'>
+                            <div className='first-title'>{property.title}</div>
+
+                            { property.freetext &&
+                                property.type === PropertyType.freetext &&
+                                <div>{property.freetext.value}</div>
+                                // <input>{property.freetext.value} </input>
                             }
 
-                            { custom_property.option.display_style === DisplayStyle.badge && 
-                                <InfoBadge
-                                    text= {custom_property.option.selected_option.value}
-                                    badge_style= {custom_property.option.selected_option.badge_style}
-                                    compact={true}/>
+                            { property.selection &&
+                                property.type === PropertyType.selection &&
+                                <PropertySelector
+                                    selectedValueId={property.selection.selected_option.id}
+                                    property={property}
+                                    placeholder={''}
+                                    placeholderButtonClass={'NoAssignee-button'}
+                                    enableEdit={true}
+                                    onSelectedChange={onSelectedPropertyChange}
+                                    selfIsFirstOption={true} />
                             }
                         </div>
-                        );
+                    );
                 })}
 
-                {props.incident.links.map((link) => {
+                {props.incident.links && props.incident.links.map((link) => {
                     return (
                         <div>
                             <a href={link.name}>{link.url}</a>
                         </div>
-                        );
+                    );
                 })}
             </div>
         </Scrollbars>

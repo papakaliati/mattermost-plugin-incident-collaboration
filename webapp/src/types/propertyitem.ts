@@ -9,8 +9,8 @@ example:
     optional: false,
     value: ''// only used when type: freetext
     selected_option: 1,
+    display_style: "Badge"
     options: {
-        display_style: "Badge"
         values: {
             id: 1
             value: AMAP
@@ -27,24 +27,29 @@ example:
 }
 */
 
-export interface CustomProperty { 
-    name: string;
-    type: CustomPropertyType;
-    optional: boolean;
-    value: string;
-    option: CustomPropertyOption;
+export interface PropertylistItem { 
+    id?: string;
+    title: string
+    type: PropertyType
+    optional: boolean
+    selection?: SelectionOption
+    freetext?: FreetextOption
 }
 
-export interface CustomPropertyOption {
+export interface FreetextOption {
+    value: string
+    badge_style?: BadgeStyle
+}
+
+export interface SelectionOption {
     values: CustomPropertyOptionValue[]
     selected_option: CustomPropertyOptionValue;
-    display_style: DisplayStyle
 }
 
 export interface CustomPropertyOptionValue{
     id?: string;
     value: string;
-    badge_style: BadgeStyle
+    badge_style?: BadgeStyle
 }
 
 export interface BadgeStyle{
@@ -52,9 +57,14 @@ export interface BadgeStyle{
     text_color: string;
 }
 
-export enum CustomPropertyType {
-    freetext = 'freetext',
-    selection = 'selection',
+export enum PropertyType {
+    freetext = 'Freetext',
+    selection = 'Selection',
+}
+
+export enum FreetextType {
+    freetext = 'Freetext',
+    label = 'Label',
 }
 
 export enum DisplayStyle {

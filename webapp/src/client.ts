@@ -29,9 +29,14 @@ import {
     FetchPlaybooksNoChecklistReturn,
     Playbook,
     PlaybookNoChecklist,
+    Propertylist,
+    PropertylistItem,
+    PropertyType,
 } from 'src/types/playbook';
 
 import {pluginId} from './manifest';
+import { title } from 'process';
+import { generatePropertyList } from './mock_property_list';
 
 const apiUrl = `/plugins/${pluginId}/api/v0`;
 
@@ -43,6 +48,13 @@ export async function fetchIncidents(params: FetchIncidentsParams) {
         data = {items: [], total_count: 0, page_count: 0, has_more: false} as FetchIncidentsReturn;
     }
 
+    let pl: Propertylist = generatePropertyList()
+    const inc = data as FetchIncidentsReturn
+    inc.items.forEach(e => {
+        e.propertylist= pl
+    });
+
+    return inc;
     return data as FetchIncidentsReturn;
 }
 
@@ -185,6 +197,16 @@ export async function setCommander(incidentId: string, commanderId: string) {
     const body = `{"commander_id": "${commanderId}"}`;
     try {
         const data = await doPost(`${apiUrl}/incidents/${incidentId}/commander`, body);
+        return data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export async function setCustomPropertyValue(incidentId: string, customPropertyId: string, selectedOptionId: string) {
+    const body = `{"customPropertyId": "${customPropertyId}" , "selectedOptionId": "${selectedOptionId}"}`;
+    try {
+        const data = await doPost(`${apiUrl}/incidents/${incidentId}/customProperty`, body);
         return data;
     } catch (error) {
         return {error};

@@ -19,7 +19,7 @@ import {Tabs, TabsContent} from 'src/components/tabs';
 import {PresetTemplates} from 'src/components/backstage/template_selector';
 
 import {teamPluginErrorUrl} from 'src/browser_routing';
-import {Playbook, Checklist, emptyPlaybook} from 'src/types/playbook';
+import {Playbook, Checklist, emptyPlaybook, PropertylistItem, Propertylist} from 'src/types/playbook';
 import {savePlaybook, clientFetchPlaybook} from 'src/client';
 import {StagesAndStepsEdit} from 'src/components/backstage/stages_and_steps_edit';
 import ConfirmModal from 'src/components/widgets/confirmation_modal';
@@ -33,6 +33,9 @@ import EditableText from './editable_text';
 import SharePlaybook from './share_playbook';
 import ChannelSelector from './channel_selector';
 import {BackstageHeader, BackstageHeaderTitle, BackstageSubheader, BackstageSubheaderText, BackstageSubheaderDescription, TabContainer, StyledTextarea, StyledAsyncSelect, StyledSelect} from './styles';
+import PropertyEdit from './property_edit';
+import { PropertyListEditor } from './propertylist_edit';
+import { generatePropertyList } from 'src/mock_property_list';
 
 const Container = styled.div`
     display: flex;
@@ -207,6 +210,9 @@ const PlaybookEdit: FC<Props> = (props: Props) => {
                         return;
                     }
 
+                    let propertylist: Propertylist = generatePropertyList();
+                    template.template.propertylist = propertylist
+
                     setPlaybook({
                         ...template.template,
                         team_id: props.currentTeam.id,
@@ -220,7 +226,12 @@ const PlaybookEdit: FC<Props> = (props: Props) => {
             if (urlParams.playbookId) {
                 try {
                     const fetchedPlaybook = await clientFetchPlaybook(urlParams.playbookId);
+
                     fetchedPlaybook.member_ids = fetchedPlaybook.member_ids || [currentUserId];
+
+                    let propertylist: Propertylist = generatePropertyList();
+                    fetchedPlaybook.properties  = propertylist
+
                     setPlaybook(fetchedPlaybook);
                     setFetchingState(FetchingStateType.fetched);
                 } catch {
@@ -241,6 +252,14 @@ const PlaybookEdit: FC<Props> = (props: Props) => {
         setPlaybook({
             ...playbook,
             checklists: newChecklist,
+        });
+        setChangesMade(true);
+    };
+
+    const updatePropertylist = (newPropertylist: Propertylist) => {
+        setPlaybook({
+            ...playbook,
+            propertylist: newPropertylist,
         });
         setChangesMade(true);
     };
@@ -375,6 +394,7 @@ const PlaybookEdit: FC<Props> = (props: Props) => {
                             setCurrentTab={setCurrentTab}
                         >
                             {'Tasks'}
+                            {'Properties'}
                             {'Preferences'}
                         </Tabs>
                     </TabsHeader>
@@ -385,6 +405,11 @@ const PlaybookEdit: FC<Props> = (props: Props) => {
                             <StagesAndStepsEdit
                                 checklists={playbook.checklists}
                                 onChange={updateChecklist}
+                            />
+                            <PropertyListEditor
+                                propertylist={playbook.propertylist}
+                                propertylistIndex= {0}
+                                onChange={updatePropertylist}
                             />
                             <TabContainer>
                                 <SidebarBlock>

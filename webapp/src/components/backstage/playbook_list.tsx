@@ -12,7 +12,7 @@ import {Team} from 'mattermost-redux/types/teams';
 
 import NoContentPlaybookSvg from 'src/components/assets/no_content_playbooks_svg';
 
-import {FetchPlaybooksNoChecklistReturn, PlaybookNoChecklist} from 'src/types/playbook';
+import {FetchPlaybooksNoChecklistReturn, PlaybookNoChecklist, PropertylistItem} from 'src/types/playbook';
 import {navigateToTeamPluginUrl} from 'src/browser_routing';
 
 import {deletePlaybook, clientFetchPlaybooks} from 'src/client';
@@ -33,6 +33,7 @@ import RightDots from 'src/components/assets/right_dots';
 import RightFade from 'src/components/assets/right_fade';
 import LeftDots from 'src/components/assets/left_dots';
 import LeftFade from 'src/components/assets/left_fade';
+import { FetchIncidentsReturn } from 'src/types/incident';
 
 const DeleteBannerTimeout = 5000;
 

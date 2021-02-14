@@ -1,7 +1,7 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 import React from 'react';
-import { BadgeStyle } from 'src/types/custom_property';
+import { BadgeStyle } from 'src/types/playbook';
 
 import styled, {css} from 'styled-components';
 

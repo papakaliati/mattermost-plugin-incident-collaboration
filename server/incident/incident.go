@@ -24,26 +24,27 @@ const (
 // NOTE: when adding a column to the db, search for "When adding an Incident column" to see where
 // that column needs to be added in the sqlstore code.
 type Incident struct {
-	ID                      string               `json:"id"`
-	Name                    string               `json:"name"` // Retrieved from incident channel
-	Description             string               `json:"description"`
-	CommanderUserID         string               `json:"commander_user_id"`
-	TeamID                  string               `json:"team_id"`
-	ChannelID               string               `json:"channel_id"`
-	CreateAt                int64                `json:"create_at"` // Retrieved from incident channel
-	EndAt                   int64                `json:"end_at"`
-	DeleteAt                int64                `json:"delete_at"` // Retrieved from incidet channel
-	ActiveStage             int                  `json:"active_stage"`
-	ActiveStageTitle        string               `json:"active_stage_title"`
-	PostID                  string               `json:"post_id"`
-	PlaybookID              string               `json:"playbook_id"`
-	Checklists              []playbook.Checklist `json:"checklists"`
-	StatusPosts             []StatusPost         `json:"status_posts"`
-	ReminderPostID          string               `json:"reminder_post_id"`
-	PreviousReminder        time.Duration        `json:"previous_reminder"`
-	BroadcastChannelID      string               `json:"broadcast_channel_id"`
-	ReminderMessageTemplate string               `json:"reminder_message_template"`
-	TimelineEvents          []TimelineEvent      `json:"timeline_events"`
+	ID                      string                  `json:"id"`
+	Name                    string                  `json:"name"` // Retrieved from incident channel
+	Description             string                  `json:"description"`
+	CommanderUserID         string                  `json:"commander_user_id"`
+	TeamID                  string                  `json:"team_id"`
+	ChannelID               string                  `json:"channel_id"`
+	CreateAt                int64                   `json:"create_at"` // Retrieved from incident channel
+	EndAt                   int64                   `json:"end_at"`
+	DeleteAt                int64                   `json:"delete_at"` // Retrieved from incidet channel
+	ActiveStage             int                     `json:"active_stage"`
+	ActiveStageTitle        string                  `json:"active_stage_title"`
+	PostID                  string                  `json:"post_id"`
+	PlaybookID              string                  `json:"playbook_id"`
+	Checklists              []playbook.Checklist    `json:"checklists"`
+	Properties              []playbook.PropertyItem `json:"properties"`
+	StatusPosts             []StatusPost            `json:"status_posts"`
+	ReminderPostID          string                  `json:"reminder_post_id"`
+	PreviousReminder        time.Duration           `json:"previous_reminder"`
+	BroadcastChannelID      string                  `json:"broadcast_channel_id"`
+	ReminderMessageTemplate string                  `json:"reminder_message_template"`
+	TimelineEvents          []TimelineEvent         `json:"timeline_events"`
 }
 
 func (i *Incident) Clone() *Incident {

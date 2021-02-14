@@ -1,0 +1,33 @@
+// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
+import React, { FC } from 'react';
+import classNames from 'classnames';
+
+import './property.scss';
+import InfoBadge from '../backstage/incidents/info_badge';
+import { PropertySelectionValue } from 'src/types/playbook';
+
+interface Props {
+    classNames?: Record<string, boolean>;
+    className?: string;
+    selectionValueId?: string;
+    extra?: JSX.Element;
+    selectedPropertyOptionValue?: PropertySelectionValue;
+}
+
+const PropertyView: FC<Props> = (props: Props) => {
+    return (
+        <div className={classNames('IncidentProfile', props.classNames, props.className)}>
+            {props.selectedPropertyOptionValue &&
+                <InfoBadge
+                    text={props.selectedPropertyOptionValue.value}
+                    badge_style={props.selectedPropertyOptionValue.badge_style}
+                    compact={true} />
+            }
+            {props.extra}
+        </div>
+    );
+};
+
+export default PropertyView;

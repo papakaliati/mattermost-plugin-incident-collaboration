@@ -2,9 +2,7 @@
 // See LICENSE.txt for license information.
 
 import {TimelineEvent, TimelineEventType} from 'src/types/rhs';
-import { CustomProperty } from './custom_property';
-
-import {Checklist, isChecklist} from './playbook';
+import {Checklist, isChecklist, Propertylist, PropertylistItem} from './playbook';
 
 export interface Incident {
     id: string;
@@ -25,11 +23,11 @@ export interface Incident {
     reminder_post_id: string;
     broadcast_channel_id: string;
     timeline_events: TimelineEvent[];
-    custom_properties: CustomProperty[];
-    links: IncidentLink[];
+    propertylist: Propertylist;
+    links?: Linklist[];
 }
 
-export interface IncidentLink {
+export interface Linklist {
     name: string;
     url: string;
 }
