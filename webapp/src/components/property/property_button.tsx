@@ -5,11 +5,11 @@ import React from 'react';
 
 import './property_button.scss';
 import PropertyItem from 'src/components/property/property';
-import { PropertySelectionValue } from 'src/types/playbook';
+import { SelectionlistItem } from 'src/types/playbook';
 
 interface Props {
     enableEdit: boolean;
-    property: PropertySelectionValue;
+    property: SelectionlistItem;
     onClick: () => void;
 }
 

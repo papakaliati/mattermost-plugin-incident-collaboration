@@ -6,14 +6,14 @@ import classNames from 'classnames';
 
 import './property.scss';
 import InfoBadge from '../backstage/incidents/info_badge';
-import { PropertySelectionValue } from 'src/types/playbook';
+import { SelectionlistItem } from 'src/types/playbook';
 
 interface Props {
     classNames?: Record<string, boolean>;
     className?: string;
     selectionValueId?: string;
     extra?: JSX.Element;
-    selectedPropertyOptionValue?: PropertySelectionValue;
+    selectedPropertyOptionValue?: SelectionlistItem;
 }
 
 const PropertyView: FC<Props> = (props: Props) => {

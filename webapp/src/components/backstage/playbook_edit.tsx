@@ -33,8 +33,8 @@ import EditableText from './editable_text';
 import SharePlaybook from './share_playbook';
 import ChannelSelector from './channel_selector';
 import {BackstageHeader, BackstageHeaderTitle, BackstageSubheader, BackstageSubheaderText, BackstageSubheaderDescription, TabContainer, StyledTextarea, StyledAsyncSelect, StyledSelect} from './styles';
-import PropertyEdit from './property_edit';
-import { PropertyListEditor } from './propertylist_edit';
+import PropertyEdit from './properties/property_edit';
+import { PropertyListEditor } from './properties/propertylist_edit';
 import { generatePropertyList } from 'src/mock_property_list';
 
 const Container = styled.div`

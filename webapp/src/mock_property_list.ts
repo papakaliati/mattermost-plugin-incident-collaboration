@@ -9,7 +9,7 @@ export function generatePropertyList(): Propertylist {
                 type: PropertyType.selection,
                 is_mandatory: false,
                 selection: {
-                    values: [
+                    items: [
                         {
                             id: '1',
                             value: 'EMEA'

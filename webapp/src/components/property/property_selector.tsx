@@ -12,7 +12,7 @@ import {UserProfile} from 'mattermost-redux/types/users';
 
 import './property_selector.scss';
 import PropertyButton from './property_button';
-import { PropertylistItem, PropertySelectionValue } from 'src/types/playbook';
+import { PropertylistItem, SelectionlistItem } from 'src/types/playbook';
 import PropertyView from './property';
 
 
@@ -66,7 +66,7 @@ export default function PropertySelector(props: Props) {
 
     async function fetchUsers() {
         const options = props.property.selection && props.property.selection;
-        const optionList = options && options.values.map((selectionValue: PropertySelectionValue) => {
+        const optionList = options && options.items.map((selectionValue: SelectionlistItem) => {
             return ({
                 label: (
                     <PropertyView
@@ -114,8 +114,8 @@ export default function PropertySelector(props: Props) {
 
         if(!props.property.selection) 
             return;
-        const idx = props.property.selection.values.findIndex(x=>x.id == value?.valueId)
-        const val = props.property.selection.values[idx];
+        const idx = props.property.selection.items.findIndex(x=>x.id == value?.valueId)
+        const val = props.property.selection.items[idx];
      
         if (!props.property.id || !val.id)
             return;

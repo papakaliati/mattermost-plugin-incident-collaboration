@@ -1,12 +1,12 @@
-import React, { FC, useState, useRef, useEffect } from 'react';
+import React, { FC, useState } from 'react';
 
-import styled, { createGlobalStyle } from 'styled-components';
+import styled from 'styled-components';
 
-import { ChecklistItem, PropertylistItem } from 'src/types/playbook';
-import { TertiaryButton } from 'src/components/assets/buttons';
-import { useUniqueId } from 'src/utils';
+import { PropertylistItem, Selectionlist } from 'src/types/playbook';
 
-import { BackstageSubheaderText, StyledTextarea } from './styles';
+import { BackstageSubheaderText } from '../styles';
+import { PropertySelectionlistEditor } from './propertyitem_selection';
+import CollapsibleSection from '../collapsible_section';
 
 export interface PropertyEditProps {
     property: PropertylistItem;
@@ -48,12 +48,12 @@ const PropertyInput = styled.input`
 `;
 
 
-interface PropertyTitleProps {
+interface TitleProps {
     title: string;
     setTitle: (title: string) => void;
 }
 
-const PropertyTitle: FC<PropertyTitleProps> = (props: PropertyTitleProps) => {
+export const TitleItem: FC<TitleProps> = (props: TitleProps) => {
     const [title, setTitle] = useState(props.title);
 
     const save = () => {
@@ -84,28 +84,28 @@ const PropertyTitle: FC<PropertyTitleProps> = (props: PropertyTitleProps) => {
 };
 
 
-interface PropertyIsMandatoryProps {
+interface CheckItemProps {
+    title: string;
     checked: boolean;
     setChecked: (item: boolean) => void;
 }
 
-const PropertyIsMandatory: FC<PropertyIsMandatoryProps> = (props: PropertyIsMandatoryProps) => {
-    const [checked, setChecked] = useState(props.checked);
+export const CheckboxItem: FC<CheckItemProps> = (props: CheckItemProps) => {
 
     return (
         <div>
             <BackstageSubheaderText>
-                {'Is Mandatory'}
+                {props.title}
             </BackstageSubheaderText>
             <input
                 className='checkbox'
                 type='checkbox'
-                checked={checked}
+                checked={props.checked}
                 onChange={() => {
-                    if (checked) {
-                        setChecked(false);
+                    if (props.checked) {
+                        props.setChecked(false);
                     } else {
-                        setChecked(true);
+                        props.setChecked(true);
                     }
                 }}
             />
@@ -115,22 +115,31 @@ const PropertyIsMandatory: FC<PropertyIsMandatoryProps> = (props: PropertyIsMand
 
 
 const PropertyEdit: FC<PropertyEditProps> = (props: PropertyEditProps) => {
-    const submit = (step: PropertylistItem) => {
-        props.onUpdate(step);
+    const submit = (propertylistItem: PropertylistItem) => {
+        props.onUpdate(propertylistItem);
     };
 
     return (
         <Container>
-            <PropertyLine>
-                <PropertyTitle
-                    title={props.property.title}
-                    setTitle={(title) => submit({ ...props.property, title })}
-                />
-                <PropertyIsMandatory
-                    checked={props.property.is_mandatory}
-                    setChecked={(is_mandatory) => submit({ ...props.property, is_mandatory })}
-                />
-            </PropertyLine>
+            <CollapsibleSection
+                title={props.property.title}
+                onTitleChange={(title) => submit({ ...props.property, title })}
+            >
+                <PropertyLine>
+                    <CheckboxItem
+                        title='Is Mandatory'
+                        checked={props.property.is_mandatory}
+                        setChecked={(is_mandatory) => submit({ ...props.property, is_mandatory })}
+                    />
+                    {props.property.selection &&
+                        <PropertySelectionlistEditor
+                            selectionlist={props.property.selection}
+                            selectionlistIndex={0}
+                            setSelectionlist={(selection: any) => submit({ ...props.property, selection })}
+                        />
+                    }
+                </PropertyLine>
+            </CollapsibleSection>
         </Container>
     );
 };

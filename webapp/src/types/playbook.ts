@@ -58,7 +58,7 @@ export interface PropertylistItem {
     title: string
     type: PropertyType
     is_mandatory: boolean
-    selection?: SelectionOption
+    selection: Selectionlist
     freetext?: TextOption
 }
 
@@ -67,12 +67,12 @@ export interface TextOption {
     badge_style?: BadgeStyle
 }
 
-export interface SelectionOption {
-    values: PropertySelectionValue[]
-    selected_option: PropertySelectionValue;
+export interface Selectionlist {
+    items: SelectionlistItem[]
+    selected_option: SelectionlistItem;
 }
 
-export interface PropertySelectionValue {
+export interface SelectionlistItem {
     id?: string;
     value: string;
     badge_style?: BadgeStyle
@@ -135,7 +135,38 @@ export function emptyPropertylistItem(): PropertylistItem {
         id: '',
         title: '',
         type: PropertyType.freetext,
-        is_mandatory: false
+        is_mandatory: false,
+        selection: emptySelectionlist(),
+        freetext: emptyFreetextOption()
+    };
+}
+
+export function emptySelectionlist(): Selectionlist {
+    return {
+        items:  [emptySelectionlistItem()],
+        selected_option: emptySelectionlistItem(),
+    };
+}
+
+export function emptySelectionlistItem(): SelectionlistItem {
+    return {
+        id: '',
+        value: '',
+        badge_style: emptyBadgeStyle()
+    };
+}
+
+export function emptyFreetextOption(): TextOption {
+    return {
+    value: '',
+    badge_style: emptyBadgeStyle()
+    };
+}
+
+export function emptyBadgeStyle(): BadgeStyle {
+    return {
+        badge_color: '',
+        text_color: '',
     };
 }
 
@@ -157,11 +188,39 @@ export const newChecklistItem = (title = '', description = '', command = '', sta
     state,
 });
 
-export const newPropertylistItem = (id = '', title = '', optional = false, type = PropertyType.freetext): PropertylistItem => ({
+export const newPropertylistItem = (id = '', title = '', optional = false, type = PropertyType.freetext, selection = newSelectionlist(), freetext = newFreetextOption()): PropertylistItem => ({
     id,
     title,
     is_mandatory: optional,
     type,
+    selection,
+    freetext,
+});
+
+export const newSelectionlist = (items = [newSelectionlistItem()], selected_option = newSelectionlistItem()): Selectionlist => ({
+    items,
+    selected_option
+});
+
+export const newSelectionlistItem = (id = '', value = '', badge_style = newBadgeStyle()): SelectionlistItem => ({
+    id,
+    value,
+    badge_style
+});
+
+export const newBadgeStyle = (badge_color = '', text_color = ''): BadgeStyle => ({
+    badge_color,
+    text_color,
+});
+
+export interface TextOption {
+    value: string
+    badge_style?: BadgeStyle
+}
+
+export const newFreetextOption = (value='', badge_style = newBadgeStyle()): TextOption => ({
+    value,
+    badge_style
 });
 
 // eslint-disable-next-line
