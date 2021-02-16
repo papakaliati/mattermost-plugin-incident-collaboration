@@ -19,7 +19,7 @@ import CollapsibleSection from './collapsible_section';
 import StepEdit from './step_edit';
 import DragHandle from './drag_handle';
 
-const DragPlaceholderText = styled.div`
+export const DragPlaceholderText = styled.div`
     border: 2px dashed rgb(var(--button-bg-rgb));
     border-radius: 5px;
     padding: 30px;

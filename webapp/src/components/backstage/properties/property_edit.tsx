@@ -2,16 +2,15 @@ import React, { FC, useState } from 'react';
 
 import styled from 'styled-components';
 
-import { PropertylistItem, Selectionlist } from 'src/types/playbook';
+import { PropertylistItem, PropertyType, Selectionlist } from 'src/types/playbook';
 
 import { BackstageSubheaderText } from '../styles';
 import { PropertySelectionlistEditor } from './propertyitem_selection';
 import CollapsibleSection from '../collapsible_section';
 
-export interface PropertyEditProps {
+export interface PropertyEditorProps {
     property: PropertylistItem;
     onUpdate: (updatedProperty: PropertylistItem) => void
-    autocompleteOnBottom: boolean;
 }
 
 const Container = styled.div`
@@ -21,6 +20,7 @@ const Container = styled.div`
     border-radius: 4px;
     background-color: var(--center-channel-bg);
     padding: 20px;
+    margin: 20px;
 `;
 
 const PropertyLine = styled.div`
@@ -113,35 +113,71 @@ export const CheckboxItem: FC<CheckItemProps> = (props: CheckItemProps) => {
     );
 };
 
+interface ComboboxItemProps {
+    type: PropertyType;
+    setType: (item: PropertyType) => void;
+}
 
-const PropertyEdit: FC<PropertyEditProps> = (props: PropertyEditProps) => {
+export const ComboboxItem: FC<ComboboxItemProps> = (props: ComboboxItemProps) => {
+
+    return (
+        <div className="App">
+            <select
+                value={props.type}
+                onChange={(e) => {
+                    let option: PropertyType;
+                    if (e.target.value === "Freetext") {
+                        option = PropertyType.Freetext;
+                    }
+                    else {
+                        option = PropertyType.Selection;
+                    }
+                    props.setType(option);
+                }}>
+                {Object.keys(PropertyType).map(key => (
+                    <option key={key} value={key}>
+                        {key}
+                    </option>
+                ))}
+            </select>
+        </div >
+    );
+};
+
+
+const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => {
     const submit = (propertylistItem: PropertylistItem) => {
         props.onUpdate(propertylistItem);
     };
 
     return (
-        <Container>
-            <CollapsibleSection
-                title={props.property.title}
-                onTitleChange={(title) => submit({ ...props.property, title })}
-            >
+        <CollapsibleSection
+            title={props.property.title}
+            onTitleChange={(title) => submit({ ...props.property, title })}
+        >
+            <Container>
                 <PropertyLine>
                     <CheckboxItem
                         title='Is Mandatory'
                         checked={props.property.is_mandatory}
                         setChecked={(is_mandatory) => submit({ ...props.property, is_mandatory })}
                     />
-                    {props.property.selection &&
+                    <ComboboxItem
+                        type={props.property.type}
+                        setType={(type) => submit({...props.property, type})}
+                    />
+                    {props.property.type === PropertyType.Selection && props.property.selection &&
                         <PropertySelectionlistEditor
+                            key={props.property.id}
                             selectionlist={props.property.selection}
-                            selectionlistIndex={0}
+                            selectionlistIndex={props.property.selection.selected_option.id}
                             setSelectionlist={(selection: any) => submit({ ...props.property, selection })}
                         />
                     }
                 </PropertyLine>
-            </CollapsibleSection>
-        </Container>
+            </Container>
+        </CollapsibleSection>
     );
 };
 
-export default PropertyEdit;
+export default PropertyEditor;

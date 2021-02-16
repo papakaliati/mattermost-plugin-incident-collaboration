@@ -6,7 +6,7 @@ export function generatePropertyList(): Propertylist {
         items: [
             {
                 title: 'Region',
-                type: PropertyType.selection,
+                type: PropertyType.Selection,
                 is_mandatory: false,
                 selection: {
                     items: [
@@ -31,11 +31,20 @@ export function generatePropertyList(): Propertylist {
             },
             {
                 title: 'Stage',
-                type: PropertyType.freetext,
+                type: PropertyType.Freetext,
                 is_mandatory: false,
                 freetext: {
                     value: 'Prod',
                 },
-            }]
+                selection: {
+                    items: [
+                     
+                    ],
+                    selected_option: {
+                        id: '',
+                        value: ''
+                    },
+                }
+            },]
     };
 }

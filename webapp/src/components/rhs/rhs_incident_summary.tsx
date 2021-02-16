@@ -98,13 +98,13 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
                             <div className='first-title'>{property.title}</div>
 
                             { property.freetext &&
-                                property.type === PropertyType.freetext &&
+                                property.type === PropertyType.Freetext &&
                                 <div>{property.freetext.value}</div>
                                 // <input>{property.freetext.value} </input>
                             }
 
                             { property.selection &&
-                                property.type === PropertyType.selection &&
+                                property.type === PropertyType.Selection &&
                                 <PropertySelector
                                     selectedValueId={property.selection.selected_option.id}
                                     property={property}

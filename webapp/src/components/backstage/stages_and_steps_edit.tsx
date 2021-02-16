@@ -23,7 +23,7 @@ import {StageEditor} from './stage_edit';
 import DragHandle from './drag_handle';
 import {BackstageHeader, BackstageHeaderTitle, BackstageHeaderHelpText} from './styles';
 
-const NewStage = styled.button`
+export const NewStage = styled.button`
     border: none;
     background: none;
     color: rgba(var(--center-channel-color-rgb), 0.56);
@@ -35,7 +35,7 @@ const NewStage = styled.button`
     }
 `;
 
-const NewStageContainer = styled.div`
+export const NewStageContainer = styled.div`
     margin: 12px 32px 0 0;
 `;
 
