@@ -92,7 +92,7 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
                     <LatestUpdate statusPosts={props.incident.status_posts} />
                 </div>
 
-                {props.incident.propertylist.items.map((property) => {
+                {props.incident.propertylist && props.incident.propertylist.items && props.incident.propertylist.items.map((property) => {
                     return (
                         <div className='inner-container first-container'>
                             <div className='first-title'>{property.title}</div>

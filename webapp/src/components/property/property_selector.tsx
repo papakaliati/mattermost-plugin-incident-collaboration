@@ -47,7 +47,7 @@ export default function PropertySelector(props: Props) {
     const [isOpen, setOpen] = useState(false);
     const toggleOpen = () => {
         if (!isOpen) {
-            fetchUsers();
+            fetchSelections();
         }
         setOpen(!isOpen);
     };
@@ -64,7 +64,7 @@ export default function PropertySelector(props: Props) {
 
     const [propertyOptions, setPropertyOptions] = useState<Option[]>([]);
 
-    async function fetchUsers() {
+    async function fetchSelections() {
         const options = props.property.selection && props.property.selection;
         const optionList = options && options.items.map((selectionValue: SelectionlistItem) => {
             return ({
@@ -75,6 +75,7 @@ export default function PropertySelector(props: Props) {
                     />
                 ),
                 valueId: selectionValue.id,
+                value: selectionValue.value
             } as Option);
         });
 
@@ -83,12 +84,12 @@ export default function PropertySelector(props: Props) {
 
     // Fill in the userOptions on mount.
     useEffect(() => {
-        fetchUsers();
+        fetchSelections();
     }, []);
 
     const [selected, setSelected] = useState<Option | null>(null);
 
-// Whenever the selectedUserId changes we have to set the selected, but we can only do this once we
+    // Whenever the selectedUserId changes we have to set the selected, but we can only do this once we
     // have userOptions
     useEffect(() => {
         if (propertyOptions === []) {
