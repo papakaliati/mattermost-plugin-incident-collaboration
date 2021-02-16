@@ -2,7 +2,7 @@ import React, { FC, useState } from 'react';
 
 import styled from 'styled-components';
 
-import { PropertylistItem, PropertyType, Selectionlist } from 'src/types/playbook';
+import { PropertylistItem, PropertyType } from 'src/types/playbook';
 
 import { BackstageSubheaderText } from '../styles';
 import { PropertySelectionlistEditor } from './propertyitem_selection';
@@ -113,9 +113,11 @@ export const CheckboxItem: FC<CheckItemProps> = (props: CheckItemProps) => {
     );
 };
 
+
 interface ComboboxItemProps {
-    type: PropertyType;
-    setType: (item: PropertyType) => void;
+    option: string;
+    options: string[];
+    setOption: (item: string) => void;
 }
 
 export const ComboboxItem: FC<ComboboxItemProps> = (props: ComboboxItemProps) => {
@@ -123,18 +125,11 @@ export const ComboboxItem: FC<ComboboxItemProps> = (props: ComboboxItemProps) =>
     return (
         <div className="App">
             <select
-                value={props.type}
+                value={props.option}
                 onChange={(e) => {
-                    let option: PropertyType;
-                    if (e.target.value === "Freetext") {
-                        option = PropertyType.Freetext;
-                    }
-                    else {
-                        option = PropertyType.Selection;
-                    }
-                    props.setType(option);
+                    props.setOption(e.target.value);
                 }}>
-                {Object.keys(PropertyType).map(key => (
+                {props.options.map(key => (
                     <option key={key} value={key}>
                         {key}
                     </option>
@@ -143,6 +138,38 @@ export const ComboboxItem: FC<ComboboxItemProps> = (props: ComboboxItemProps) =>
         </div >
     );
 };
+
+
+// interface ComboboxItemProps {
+//     type: PropertyType;
+//     setType: (item: PropertyType) => void;
+// }
+
+// export const ComboboxItem: FC<ComboboxItemProps> = (props: ComboboxItemProps) => {
+
+//     return (
+//         <div className="App">
+//             <select
+//                 value={props.type}
+//                 onChange={(e) => {
+//                     let option: PropertyType;
+//                     if (e.target.value === "Freetext") {
+//                         option = PropertyType.Freetext;
+//                     }
+//                     else {
+//                         option = PropertyType.Selection;
+//                     }
+//                     props.setType(option);
+//                 }}>
+//                 {Object.keys(PropertyType).map(key => (
+//                     <option key={key} value={key}>
+//                         {key}
+//                     </option>
+//                 ))}
+//             </select>
+//         </div >
+//     );
+// };
 
 
 const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => {
@@ -163,16 +190,54 @@ const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => 
                         setChecked={(is_mandatory) => submit({ ...props.property, is_mandatory })}
                     />
                     <ComboboxItem
-                        type={props.property.type}
-                        setType={(type) => submit({...props.property, type})}
+                        option={props.property.type}
+                        options={Object.keys(PropertyType)}
+                        setOption={(option) => {
+                            let type: PropertyType;
+                            if (option === "Freetext") {
+                                type = PropertyType.Freetext;
+                            }
+                            else {
+                                type = PropertyType.Selection;
+                            }
+                            submit({ ...props.property, type })
+                        }}
                     />
                     {props.property.type === PropertyType.Selection && props.property.selection &&
-                        <PropertySelectionlistEditor
-                            key={props.property.id}
-                            selectionlist={props.property.selection}
-                            selectionlistIndex={props.property.selection.selected_option.id}
-                            setSelectionlist={(selection: any) => submit({ ...props.property, selection })}
-                        />
+                        <>
+                            <CheckboxItem
+                                title='Is Multiselect'
+                                checked={props.property.selection.is_multiselect}
+                                setChecked={(is_multiselect) => {
+                                    if (props.property.selection)
+                                        props.property.selection.is_multiselect = is_multiselect;
+                                    submit({ ...props.property })
+                                }}
+                            />
+                            {/* <ComboboxItem
+                            option={props.property.selection.type}
+                            options={Object.keys(SelectionType)}
+                            setOption={(option) => {
+                                let type: SelectionType;
+                                if (option === "Singleselect") {
+                                    type = SelectionType.Singleselect;
+                                }
+                                else {
+                                    type = SelectionType.Multiselect;
+                                }
+                                if(props.property.selection)
+                                    props.property.selection.type = type;
+                                    
+                                submit({ ...props.property})
+                        }}
+                /> */}
+                            <PropertySelectionlistEditor
+                                key={props.property.id}
+                                selectionlist={props.property.selection}
+                                selectionlistIndex={props.property.selection.selected_id}
+                                setSelectionlist={(selection: any) => submit({ ...props.property, selection })}
+                            />
+                        </>
                     }
                 </PropertyLine>
             </Container>

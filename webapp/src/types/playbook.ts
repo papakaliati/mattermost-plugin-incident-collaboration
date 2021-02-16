@@ -1,6 +1,8 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+import Select from "react-select/src/Select";
+
 export interface Playbook {
     id?: string;
     title: string;
@@ -69,7 +71,8 @@ export interface TextOption {
 
 export interface Selectionlist {
     items: SelectionlistItem[]
-    selected_option: SelectionlistItem;
+    is_multiselect: boolean;
+    selected_id: string;
 }
 
 export interface SelectionlistItem {
@@ -144,7 +147,8 @@ export function emptyPropertylistItem(): PropertylistItem {
 export function emptySelectionlist(): Selectionlist {
     return {
         items:  [emptySelectionlistItem()],
-        selected_option: emptySelectionlistItem(),
+        selected_id: '',
+        is_multiselect: false,
     };
 }
 
@@ -197,9 +201,10 @@ export const newPropertylistItem = (id = '', title = '', optional = false, type 
     freetext,
 });
 
-export const newSelectionlist = (items = [newSelectionlistItem()], selected_option = newSelectionlistItem()): Selectionlist => ({
+export const newSelectionlist = (items = [newSelectionlistItem()], selected_id = '', is_multiselect = false): Selectionlist => ({
     items,
-    selected_option
+    selected_id,
+    is_multiselect
 });
 
 export const newSelectionlistItem = (id = '', value = '', badge_style = newBadgeStyle()): SelectionlistItem => ({

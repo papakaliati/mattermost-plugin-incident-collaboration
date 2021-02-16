@@ -1,14 +1,14 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useState} from 'react';
-import {useSelector} from 'react-redux';
-import ReactSelect, {ActionTypes, ControlProps, StylesConfig} from 'react-select';
-import {css} from '@emotion/core';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import ReactSelect, { ActionTypes, ControlProps, StylesConfig } from 'react-select';
+import { css } from '@emotion/core';
 
-import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
-import {GlobalState} from 'mattermost-redux/types/store';
-import {UserProfile} from 'mattermost-redux/types/users';
+import { getCurrentUserId } from 'mattermost-redux/selectors/entities/users';
+import { GlobalState } from 'mattermost-redux/types/store';
+import { UserProfile } from 'mattermost-redux/types/users';
 
 import './property_selector.scss';
 import PropertyButton from './property_button';
@@ -18,7 +18,7 @@ import PropertyView from './property';
 
 interface Option {
     value: string;
-    label: JSX.Element|string;
+    label: JSX.Element | string;
     valueId: string;
 }
 
@@ -28,7 +28,7 @@ interface ActionObj {
 
 interface Props {
     selectedValueId?: string;
-    property : PropertylistItem;
+    property: PropertylistItem;
     placeholder: React.ReactNode;
     placeholderButtonClass?: string;
     onlyPlaceholder?: boolean;
@@ -43,7 +43,6 @@ interface Props {
 }
 
 export default function PropertySelector(props: Props) {
-
     const [isOpen, setOpen] = useState(false);
     const toggleOpen = () => {
         if (!isOpen) {
@@ -70,8 +69,8 @@ export default function PropertySelector(props: Props) {
             return ({
                 label: (
                     <PropertyView
-                       selectionValueId={selectionValue.id}
-                       selectedPropertyOptionValue = {selectionValue}
+                        selectionValueId={selectionValue.id}
+                        selectedPropertyOptionValue={selectionValue}
                     />
                 ),
                 valueId: selectionValue.id,
@@ -87,14 +86,16 @@ export default function PropertySelector(props: Props) {
         fetchSelections();
     }, []);
 
-    const [selected, setSelected] = useState<Option | null>(null);
+    let [selected, setSelected] = useState<Option | null>(null);
+    let [selectedValues, setSelectedValues] = useState<Option[] | null>(null);
 
     // Whenever the selectedUserId changes we have to set the selected, but we can only do this once we
-    // have userOptions
+    // have propertyOptions
     useEffect(() => {
         if (propertyOptions === []) {
             return;
         }
+
 
         const propertySelection = propertyOptions.find((option: Option) => option.valueId === props.selectedValueId);
         if (propertySelection) {
@@ -102,7 +103,8 @@ export default function PropertySelector(props: Props) {
         } else {
             setSelected(null);
         }
-    }, [propertyOptions, props.selectedValueId]);
+    }, [propertyOptions, props.selectedValueId]
+    );
 
     const onSelectedChange = async (value: Option | undefined, action: ActionObj) => {
         if (action.action === 'clear') {
@@ -113,22 +115,26 @@ export default function PropertySelector(props: Props) {
             return;
         }
 
-        if(!props.property.selection) 
+        if (!props.property.selection)
             return;
-        const idx = props.property.selection.items.findIndex(x=>x.id == value?.valueId)
+
+
+        const idx = props.property.selection.items.findIndex(x => x.id === value?.valueId)
         const val = props.property.selection.items[idx];
-     
-        if (!props.property.id || !val.id)
-            return;
-        props.onSelectedChange(props.property.id, val.id);
+        if (props.property.id && val.id) {
+            props.onSelectedChange(props.property.id, val.id);
+        }
     };
 
     let target;
-    if (props.property.selection?.selected_option.value) {
+    if (props.property.selection && props.property.selection.selected_id) {
+
+        const idx = props.property.selection.items.findIndex(x => x.id == props.property.selection?.selected_id)
+        const val = props.property.selection.items[idx];
         target = (
             <PropertyButton
                 enableEdit={props.enableEdit}
-                property= {props.property.selection.selected_option}
+                property={val}
                 onClick={props.enableEdit ? toggleOpen : () => null}
             />
         );
@@ -139,7 +145,7 @@ export default function PropertySelector(props: Props) {
                 className={props.placeholderButtonClass || 'IncidentFilter-button'}
             >
                 {props.placeholder}
-                {<i className='icon-chevron-down icon--small ml-2'/>}
+                {<i className='icon-chevron-down icon--small ml-2' />}
             </button>
         );
     }
@@ -154,8 +160,9 @@ export default function PropertySelector(props: Props) {
         );
     }
 
-    const noDropdown = {DropdownIndicator: null, IndicatorSeparator: null};
-    const components = props.customControl ? {...noDropdown, Control: props.customControl} : noDropdown;
+    const noDropdown = { DropdownIndicator: null, IndicatorSeparator: null };
+    const components = props.customControl ? { ...noDropdown, Control: props.customControl } : noDropdown;
+
 
     return (
         <Dropdown
@@ -184,12 +191,13 @@ export default function PropertySelector(props: Props) {
             />
         </Dropdown>
     );
+
 }
 
 // styles for the select component
 const selectStyles: StylesConfig = {
-    control: (provided) => ({...provided, minWidth: 240, margin: 8}),
-    menu: () => ({boxShadow: 'none'}),
+    control: (provided) => ({ ...provided, minWidth: 240, margin: 8 }),
+    menu: () => ({ boxShadow: 'none' }),
     option: (provided, state) => {
         const hoverColor = 'rgba(20, 93, 191, 0.08)';
         const bgHover = state.isFocused ? hoverColor : 'transparent';
@@ -210,22 +218,22 @@ interface DropdownProps {
     onClose: () => void;
 }
 
-const Dropdown = ({children, isOpen, showOnRight, target, onClose}: DropdownProps) => (
+const Dropdown = ({ children, isOpen, showOnRight, target, onClose }: DropdownProps) => (
     <div
         className={`IncidentFilter profile-dropdown${isOpen ? ' IncidentFilter--active profile-dropdown--active' : ''} ${showOnRight && 'show-on-right'}`}
-        css={{position: 'relative'}}
+        css={{ position: 'relative' }}
     >
         {target}
         {isOpen ? <Menu className='IncidentFilter-select incident-user-select__container'>
             {children}
         </Menu> : null}
-        {isOpen ? <Blanket onClick={onClose}/> : null}
+        {isOpen ? <Blanket onClick={onClose} /> : null}
     </div>
 );
 
 const Menu = (props: Record<string, any>) => {
     return (
-        <div {...props}/>
+        <div {...props} />
     );
 };
 
@@ -242,19 +250,3 @@ const Blanket = (props: Record<string, any>) => (
         {...props}
     />
 );
-
-const getFullName = (firstName: string, lastName: string): string => {
-    return (firstName + ' ' + lastName).trim();
-};
-
-const getUserDescription = (firstName: string, lastName: string, nickName: string): string => {
-    if ((firstName || lastName) && nickName) {
-        return ` ${getFullName(firstName, lastName)} (${nickName})`;
-    } else if (nickName) {
-        return ` (${nickName})`;
-    } else if (firstName || lastName) {
-        return ` ${getFullName(firstName, lastName)}`;
-    }
-
-    return '';
-};

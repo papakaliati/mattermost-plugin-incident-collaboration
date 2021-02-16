@@ -16,7 +16,8 @@ import {
 } from 'src/components/rhs/rhs_shared';
 import LatestUpdate from 'src/components/rhs/latest_update';
 import PropertySelector from '../property/property_selector';
-import { PropertyType } from 'src/types/playbook';
+import { PropertylistItem, PropertyType } from 'src/types/playbook';
+import PropertyMultiSelector from '../property/property_multiselector';
 
 interface Props {
     incident: Incident;
@@ -45,6 +46,15 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
             console.log(response.error); // eslint-disable-line no-console
         }
     };
+
+    const onMultiSelectedPropertyChange = async (propertyId: string, valueId: string[]) => {
+        const response = await setCustomPropertyValue(props.incident.id, propertyId, valueId.join());
+        if (response.error) {
+            // TODO: Should be presented to the user? https://mattermost.atlassian.net/browse/MM-24271
+            console.log(response.error); // eslint-disable-line no-console
+        }
+    };
+
 
     return (
         <Scrollbars
@@ -100,19 +110,29 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
                             { property.freetext &&
                                 property.type === PropertyType.Freetext &&
                                 <div>{property.freetext.value}</div>
-                                // <input>{property.freetext.value} </input>
                             }
 
                             { property.selection &&
                                 property.type === PropertyType.Selection &&
+                                !property.selection.is_multiselect &&
                                 <PropertySelector
-                                    selectedValueId={property.selection.selected_option.id}
+                                    selectedValueId={property.selection.selected_id}
                                     property={property}
                                     placeholder={''}
                                     placeholderButtonClass={'NoAssignee-button'}
                                     enableEdit={true}
                                     onSelectedChange={onSelectedPropertyChange}
                                     selfIsFirstOption={true} />
+                            }
+
+                            { property.selection &&
+                                property.type === PropertyType.Selection &&
+                                property.selection.is_multiselect &&
+                                <PropertyMultiSelector
+                                    selectedValueId={property.selection.selected_id}
+                                    property={property}
+                                    onMultiSelectedChange={onMultiSelectedPropertyChange}
+                                />
                             }
                         </div>
                     );

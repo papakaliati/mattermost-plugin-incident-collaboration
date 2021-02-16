@@ -131,7 +131,6 @@ export const PropertySelectionlistEditor = (props: Props): React.ReactElement =>
                     </Droppable>
                 </DragDropContext>
 
-
                 <TertiaryButton
                     className='mt-3'
                     onClick={handleAddSelectionlistItem}

@@ -1,4 +1,4 @@
-import { Propertylist, PropertylistItem, PropertyType } from "./types/playbook";
+import { emptyFreetextOption, emptySelectionlist, emptySelectionlistItem, Propertylist, PropertylistItem, PropertyType } from "./types/playbook";
 
 export function generatePropertyList(): Propertylist {
     return {
@@ -24,11 +24,10 @@ export function generatePropertyList(): Propertylist {
                             value: 'China'
                         },
                     ],
-                    selected_option: {
-                        id: '1',
-                        value: 'EMEA'
-                    },
-                }
+                   selected_id: '1,2',
+                   is_multiselect: true,
+                },
+                freetext: emptyFreetextOption()
             },
             {
                 id: "2",
@@ -38,15 +37,34 @@ export function generatePropertyList(): Propertylist {
                 freetext: {
                     value: 'Prod',
                 },
+                selection: emptySelectionlist()
+            },
+            {
+                id: "3",
+                title: 'Priority',
+                type: PropertyType.Selection,
+                is_mandatory: false,
                 selection: {
                     items: [
-                     
+                        {
+                            id: '1',
+                            value: 'P1'
+                        },
+                        {
+                            id: '2',
+                            value: 'P2'
+                        },
+                        {
+                            id: '3',
+                            value: 'P3'
+                        },
                     ],
-                    selected_option: {
-                        id: '',
-                        value: ''
-                    },
-                }
-            },]
+                   selected_id: '2',
+                   is_multiselect: false,
+                },
+                freetext: emptyFreetextOption()
+            },
+        
+        ]
     };
 }
