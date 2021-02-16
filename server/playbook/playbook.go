@@ -11,21 +11,21 @@ var ErrNotFound = errors.New("not found")
 
 // Playbook represents the planning before an incident type is initiated.
 type Playbook struct {
-	ID                          string         `json:"id"`
-	Title                       string         `json:"title"`
-	Description                 string         `json:"description"`
-	TeamID                      string         `json:"team_id"`
-	CreatePublicIncident        bool           `json:"create_public_incident"`
-	CreateAt                    int64          `json:"create_at"`
-	DeleteAt                    int64          `json:"delete_at"`
-	NumStages                   int64          `json:"num_stages"`
-	NumSteps                    int64          `json:"num_steps"`
-	Checklists                  []Checklist    `json:"checklists"`
-	Properties                  []PropertyItem `json:"properties"`
-	MemberIDs                   []string       `json:"member_ids"`
-	BroadcastChannelID          string         `json:"broadcast_channel_id"`
-	ReminderMessageTemplate     string         `json:"reminder_message_template"`
-	ReminderTimerDefaultSeconds int64          `json:"reminder_timer_default_seconds"`
+	ID                          string       `json:"id"`
+	Title                       string       `json:"title"`
+	Description                 string       `json:"description"`
+	TeamID                      string       `json:"team_id"`
+	CreatePublicIncident        bool         `json:"create_public_incident"`
+	CreateAt                    int64        `json:"create_at"`
+	DeleteAt                    int64        `json:"delete_at"`
+	NumStages                   int64        `json:"num_stages"`
+	NumSteps                    int64        `json:"num_steps"`
+	Checklists                  []Checklist  `json:"checklists"`
+	Propertylist                Propertylist `json:"propertylist"`
+	MemberIDs                   []string     `json:"member_ids"`
+	BroadcastChannelID          string       `json:"broadcast_channel_id"`
+	ReminderMessageTemplate     string       `json:"reminder_message_template"`
+	ReminderTimerDefaultSeconds int64        `json:"reminder_timer_default_seconds"`
 }
 
 func (p Playbook) Clone() Playbook {
@@ -35,11 +35,10 @@ func (p Playbook) Clone() Playbook {
 		newChecklists = append(newChecklists, c.Clone())
 	}
 
-	var newProperties []PropertyItem
-	for _, c := range p.Properties {
-		newProperties = append(newProperties, c.Clone())
-	}
+	var newPropertylist Propertylist
+	newPropertylist = p.Propertylist.Clone()
 
+	newPlaybook.Propertylist = newPropertylist
 	newPlaybook.Checklists = newChecklists
 	newPlaybook.MemberIDs = append([]string(nil), p.MemberIDs...)
 	return newPlaybook
@@ -58,11 +57,22 @@ func (p Playbook) MarshalJSON() ([]byte, error) {
 			old.Checklists[j].Items = []ChecklistItem{}
 		}
 	}
+
+	if old.Propertylist.Items == nil {
+		old.Propertylist.Items = []PropertylistItem{}
+	}
 	if old.MemberIDs == nil {
 		old.MemberIDs = []string{}
 	}
 
 	return json.Marshal(old)
+}
+
+// Propertylist represents collection of properties in a playbook
+type Propertylist struct {
+	ID    string             `json:"id"`
+	Title string             `json:"title"`
+	Items []PropertylistItem `json:"items"`
 }
 
 // Checklist represents a checklist in a playbook
@@ -78,7 +88,18 @@ func (c Checklist) Clone() Checklist {
 	return newChecklist
 }
 
-func (c PropertyItem) Clone() PropertyItem {
+func (c Propertylist) Clone() Propertylist {
+	newPropertylist := c
+
+	for i, c := range newPropertylist.Items {
+		var item = c.Clone()
+		newPropertylist.Items[i] = item
+	}
+
+	return newPropertylist
+}
+
+func (c PropertylistItem) Clone() PropertylistItem {
 	newPropertyItem := c
 	newPropertyItem = c
 	return newPropertyItem
@@ -99,26 +120,43 @@ type ChecklistItem struct {
 	Description            string `json:"description"`
 }
 
-// PropertyItem represents an item in a checklist
-type PropertyItem struct {
-	ID                     string `json:"id"`
-	Title                  string `json:"title"`
-	State                  string `json:"state"`
-	StateModified          int64  `json:"state_modified"`
-	StateModifiedPostID    string `json:"state_modified_post_id"`
-	AssigneeID             string `json:"assignee_id"`
-	AssigneeModified       int64  `json:"assignee_modified"`
-	AssigneeModifiedPostID string `json:"assignee_modified_post_id"`
-	Command                string `json:"command"`
-	CommandLastRun         int64  `json:"command_last_run"`
-	Description            string `json:"description"`
-}
-
 type GetPlaybooksResults struct {
 	TotalCount int        `json:"total_count"`
 	PageCount  int        `json:"page_count"`
 	HasMore    bool       `json:"has_more"`
 	Items      []Playbook `json:"items"`
+}
+
+// PropertylistItem represents an item in a checklist
+type PropertylistItem struct {
+	ID          string        `json:"id"`
+	Title       string        `json:"title"`
+	Type        string        `json:"type"`
+	IsMandatory bool          `json:"is_mandatory"`
+	Selection   Selectionlist `json:"selection"`
+	Treetext    TextOption    `json:"freetext"`
+}
+
+type TextOption struct {
+	Value      string `json:"value"`
+	BadgeStyle string `json:"badge_style"`
+}
+
+type Selectionlist struct {
+	Items         []SelectionlistItem `json:"items"`
+	IsMultiselect bool                `json:"is_multiselect"`
+	SelectedId    string              `json:"selected_id"`
+}
+
+type SelectionlistItem struct {
+	ID         string     `json:"id"`
+	Value      string     `json:"value"`
+	BadgeStyle BadgeStyle `json:"badge_style"`
+}
+
+type BadgeStyle struct {
+	BadgeColor string `json:"badge_color"`
+	TextColor  string `json:"text_color"`
 }
 
 // MarshalJSON customizes the JSON marshalling for GetPlaybooksResults by rendering a nil Items as

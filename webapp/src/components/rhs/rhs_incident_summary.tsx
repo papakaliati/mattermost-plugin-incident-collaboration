@@ -4,7 +4,7 @@
 import React, { FC } from 'react';
 import Scrollbars from 'react-custom-scrollbars';
 
-import { fetchUsersInChannel, setCommander, setCustomPropertyValue } from 'src/client';
+import { fetchUsersInChannel, setCommander, setPropertySelectionValue } from 'src/client';
 import { Incident, incidentCurrentStatus } from 'src/types/incident';
 import ProfileSelector from 'src/components/profile/profile_selector';
 import Duration from '../duration';
@@ -40,7 +40,7 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
     };
 
     const onSelectedPropertyChange = async (propertyId: string, valueId: string) => {
-        const response = await setCustomPropertyValue(props.incident.id, propertyId, valueId);
+        const response = await setPropertySelectionValue(props.incident.id, propertyId, valueId);
         if (response.error) {
             // TODO: Should be presented to the user? https://mattermost.atlassian.net/browse/MM-24271
             console.log(response.error); // eslint-disable-line no-console
@@ -48,7 +48,7 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
     };
 
     const onMultiSelectedPropertyChange = async (propertyId: string, valueId: string[]) => {
-        const response = await setCustomPropertyValue(props.incident.id, propertyId, valueId.join());
+        const response = await setPropertySelectionValue(props.incident.id, propertyId, valueId.join());
         if (response.error) {
             // TODO: Should be presented to the user? https://mattermost.atlassian.net/browse/MM-24271
             console.log(response.error); // eslint-disable-line no-console

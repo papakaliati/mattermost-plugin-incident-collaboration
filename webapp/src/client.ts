@@ -203,10 +203,20 @@ export async function setCommander(incidentId: string, commanderId: string) {
     }
 }
 
-export async function setCustomPropertyValue(incidentId: string, customPropertyId: string, selectedOptionId: string) {
-    const body = `{"customPropertyId": "${customPropertyId}" , "selectedOptionId": "${selectedOptionId}"}`;
+export async function setPropertySelectionValue(incidentId: string, propertylistItemId: string, selectedOptionId: string) {
+    const body = `{"property_id": "${propertylistItemId}" , "selection_id": "${selectedOptionId}"}`;
     try {
-        const data = await doPost(`${apiUrl}/incidents/${incidentId}/customProperty`, body);
+        const data = await doPost(`${apiUrl}/incidents/${incidentId}/property-selection-value`, body);
+        return data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export async function setPropertyFreetextValue(incidentId: string, propertylistItemId: string, selectedOptionId: string) {
+    const body = `{"property_id": "${propertylistItemId}" , "value": "${selectedOptionId}"}`;
+    try {
+        const data = await doPost(`${apiUrl}/incidents/${incidentId}/property-freetext-value`, body);
         return data;
     } catch (error) {
         return {error};

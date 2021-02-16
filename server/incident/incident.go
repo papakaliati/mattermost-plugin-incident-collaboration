@@ -24,27 +24,27 @@ const (
 // NOTE: when adding a column to the db, search for "When adding an Incident column" to see where
 // that column needs to be added in the sqlstore code.
 type Incident struct {
-	ID                      string                  `json:"id"`
-	Name                    string                  `json:"name"` // Retrieved from incident channel
-	Description             string                  `json:"description"`
-	CommanderUserID         string                  `json:"commander_user_id"`
-	TeamID                  string                  `json:"team_id"`
-	ChannelID               string                  `json:"channel_id"`
-	CreateAt                int64                   `json:"create_at"` // Retrieved from incident channel
-	EndAt                   int64                   `json:"end_at"`
-	DeleteAt                int64                   `json:"delete_at"` // Retrieved from incidet channel
-	ActiveStage             int                     `json:"active_stage"`
-	ActiveStageTitle        string                  `json:"active_stage_title"`
-	PostID                  string                  `json:"post_id"`
-	PlaybookID              string                  `json:"playbook_id"`
-	Checklists              []playbook.Checklist    `json:"checklists"`
-	Properties              []playbook.PropertyItem `json:"properties"`
-	StatusPosts             []StatusPost            `json:"status_posts"`
-	ReminderPostID          string                  `json:"reminder_post_id"`
-	PreviousReminder        time.Duration           `json:"previous_reminder"`
-	BroadcastChannelID      string                  `json:"broadcast_channel_id"`
-	ReminderMessageTemplate string                  `json:"reminder_message_template"`
-	TimelineEvents          []TimelineEvent         `json:"timeline_events"`
+	ID                      string                `json:"id"`
+	Name                    string                `json:"name"` // Retrieved from incident channel
+	Description             string                `json:"description"`
+	CommanderUserID         string                `json:"commander_user_id"`
+	TeamID                  string                `json:"team_id"`
+	ChannelID               string                `json:"channel_id"`
+	CreateAt                int64                 `json:"create_at"` // Retrieved from incident channel
+	EndAt                   int64                 `json:"end_at"`
+	DeleteAt                int64                 `json:"delete_at"` // Retrieved from incidet channel
+	ActiveStage             int                   `json:"active_stage"`
+	ActiveStageTitle        string                `json:"active_stage_title"`
+	PostID                  string                `json:"post_id"`
+	PlaybookID              string                `json:"playbook_id"`
+	Checklists              []playbook.Checklist  `json:"checklists"`
+	Propertylist            playbook.Propertylist `json:"propertylist"`
+	StatusPosts             []StatusPost          `json:"status_posts"`
+	ReminderPostID          string                `json:"reminder_post_id"`
+	PreviousReminder        time.Duration         `json:"previous_reminder"`
+	BroadcastChannelID      string                `json:"broadcast_channel_id"`
+	ReminderMessageTemplate string                `json:"reminder_message_template"`
+	TimelineEvents          []TimelineEvent       `json:"timeline_events"`
 }
 
 func (i *Incident) Clone() *Incident {
@@ -54,6 +54,9 @@ func (i *Incident) Clone() *Incident {
 		newChecklists = append(newChecklists, c.Clone())
 	}
 	newIncident.Checklists = newChecklists
+
+	var newPropertylist = i.Propertylist.Clone()
+	newIncident.Propertylist = newPropertylist
 
 	newIncident.StatusPosts = append([]StatusPost(nil), i.StatusPosts...)
 	newIncident.TimelineEvents = append([]TimelineEvent(nil), i.TimelineEvents...)
@@ -74,6 +77,10 @@ func (i *Incident) MarshalJSON() ([]byte, error) {
 			old.Checklists[j].Items = []playbook.ChecklistItem{}
 		}
 	}
+
+	old.Propertylist = playbook.Propertylist{}
+	old.Propertylist.Items = []playbook.PropertylistItem{}
+
 	if old.StatusPosts == nil {
 		old.StatusPosts = []StatusPost{}
 	}
@@ -98,6 +105,25 @@ func (i *Incident) CurrentStatus() string {
 	}
 
 	return post.Status
+}
+
+func findNewestNonDeletedPostID(posts []StatusPost) string {
+	newest := findNewestNonDeletedStatusPost(posts)
+	if newest == nil {
+		return ""
+	}
+
+	return newest.ID
+}
+
+func findNewestNonDeletedStatusPost(posts []StatusPost) *StatusPost {
+	var newest *StatusPost
+	for i, p := range posts {
+		if p.DeleteAt == 0 && (newest == nil || p.CreateAt > newest.CreateAt) {
+			newest = &posts[i]
+		}
+	}
+	return newest
 }
 
 func (i *Incident) IsActive() bool {
@@ -159,12 +185,13 @@ type Metadata struct {
 type timelineEventType string
 
 const (
-	IncidentCreated   timelineEventType = "incident_created"
-	TaskStateModified timelineEventType = "task_state_modified"
-	StatusUpdated     timelineEventType = "status_updated"
-	CommanderChanged  timelineEventType = "commander_changed"
-	AssigneeChanged   timelineEventType = "assignee_changed"
-	RanSlashCommand   timelineEventType = "ran_slash_command"
+	IncidentCreated      timelineEventType = "incident_created"
+	TaskStateModified    timelineEventType = "task_state_modified"
+	StatusUpdated        timelineEventType = "status_updated"
+	CommanderChanged     timelineEventType = "commander_changed"
+	AssigneeChanged      timelineEventType = "assignee_changed"
+	RanSlashCommand      timelineEventType = "ran_slash_command"
+	PropertyValueChanged timelineEventType = "property_value_changed"
 )
 
 type TimelineEvent struct {
@@ -296,6 +323,14 @@ type Service interface {
 	// to commanderID. Changing to the same commanderID is a no-op.
 	ChangeCommander(incidentID string, userID string, commanderID string) error
 
+	// ChangePropertySelectionValue processes a request from userID to change the property value of type selection
+	// with id propertyID for incidentID to selectionID.
+	ChangePropertySelectionValue(incidentID string, userID string, propertyID string, selectionID string) error
+
+	// ChangePropertyFreetextValue processes a request from userID to change the property value of type freetext
+	// with id propertyID for incidentID to freetextValue.
+	ChangePropertyFreetextValue(incidentID string, userID string, propertyID string, freetextValue string) error
+
 	// ModifyCheckedState modifies the state of the specified checklist item
 	// Idempotent, will not perform any actions if the checklist item is already in the specified state
 	ModifyCheckedState(incidentID, userID, newState string, checklistNumber int, itemNumber int) error
@@ -319,11 +354,26 @@ type Service interface {
 	// RenameChecklistItem changes the title of a specified checklist item
 	RenameChecklistItem(incidentID, userID string, checklistNumber int, itemNumber int, newTitle, newCommand string) error
 
-	// MoveChecklistItem moves a checklist item from one position to anouther
+	// MoveChecklistItem moves a checklist item from one position to another
 	MoveChecklistItem(incidentID, userID string, checklistNumber int, itemNumber int, newLocation int) error
 
 	// GetChecklistAutocomplete returns the list of checklist items for incidentID to be used in autocomplete
 	GetChecklistAutocomplete(incidentID string) ([]model.AutocompleteListItem, error)
+
+	// AddChecklistItem adds an item to the specified checklist
+	AddPropertylistItem(incidentID, userID string, checklistItem playbook.PropertylistItem) error
+
+	// RemoveChecklistItem removes an item from the specified checklist
+	RemovePropertylistItem(incidentID, userID string, itemNumber int) error
+
+	// RenameChecklistItem changes the title of a specified checklist item
+	UpdatePropertylistItem(incidentID, userID string, itemNumber int, checklistItem playbook.PropertylistItem) error
+
+	// MovePropertylistItem moves a property item from one position to another
+	MovePropertylistItem(incidentID, userID string, itemNumber int, newLocation int) error
+
+	// GetPropertylistAutocomplete returns the list of checklist items for incidentID to be used in autocomplete
+	GetPropertylistAutocomplete(incidentID string) ([]model.AutocompleteListItem, error)
 
 	// NukeDB removes all incident related data.
 	NukeDB() error
@@ -400,6 +450,9 @@ type Telemetry interface {
 
 	// ChangeCommander tracks changes in commander.
 	ChangeCommander(incident *Incident, userID string)
+
+	// PropertyValueChanged tracks changes in property values.
+	PropertyValueChanged(incident *Incident, userID string)
 
 	// UpdateStatus tracks when an incident's status has been updated
 	UpdateStatus(incident *Incident, userID string)

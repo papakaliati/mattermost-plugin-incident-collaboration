@@ -15,7 +15,8 @@ import (
 
 type sqlPlaybook struct {
 	playbook.Playbook
-	ChecklistsJSON json.RawMessage
+	ChecklistsJSON   json.RawMessage
+	PropertylistJSON json.RawMessage
 }
 
 // playbookStore is a sql store for playbooks. Use NewPlaybookStore to create it.
@@ -87,6 +88,7 @@ func (p *playbookStore) Create(pbook playbook.Playbook) (id string, err error) {
 			"CreateAt":                    rawPlaybook.CreateAt,
 			"DeleteAt":                    rawPlaybook.DeleteAt,
 			"ChecklistsJSON":              rawPlaybook.ChecklistsJSON,
+			"PropertylistJSON":            rawPlaybook.PropertylistJSON,
 			"NumStages":                   len(rawPlaybook.Checklists),
 			"NumSteps":                    getSteps(rawPlaybook.Playbook),
 			"BroadcastChannelID":          rawPlaybook.BroadcastChannelID,
@@ -121,7 +123,7 @@ func (p *playbookStore) Get(id string) (out playbook.Playbook, err error) {
 	defer p.store.finalizeTransaction(tx)
 
 	withChecklistsSelect := p.playbookSelect.
-		Columns("ChecklistsJSON").
+		Columns("ChecklistsJSON, PropertylistJSON").
 		From("IR_Playbook")
 
 	var rawPlaybook sqlPlaybook
@@ -278,6 +280,7 @@ func (p *playbookStore) Update(updated playbook.Playbook) (err error) {
 			"CreatePublicIncident":        rawPlaybook.CreatePublicIncident,
 			"DeleteAt":                    rawPlaybook.DeleteAt,
 			"ChecklistsJSON":              rawPlaybook.ChecklistsJSON,
+			"PropertylistJSON":            rawPlaybook.PropertylistJSON,
 			"NumStages":                   len(rawPlaybook.Checklists),
 			"NumSteps":                    getSteps(rawPlaybook.Playbook),
 			"BroadcastChannelID":          rawPlaybook.BroadcastChannelID,
@@ -387,9 +390,15 @@ func toSQLPlaybook(origPlaybook playbook.Playbook) (*sqlPlaybook, error) {
 		return nil, errors.Wrapf(err, "failed to marshal checklist json for incident id: '%s'", origPlaybook.ID)
 	}
 
+	propertylistJSON, err := json.Marshal(origPlaybook.Propertylist)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to marshal propertylist json for incident id: '%s'", origPlaybook.ID)
+	}
+
 	return &sqlPlaybook{
-		Playbook:       origPlaybook,
-		ChecklistsJSON: checklistsJSON,
+		Playbook:         origPlaybook,
+		ChecklistsJSON:   checklistsJSON,
+		PropertylistJSON: propertylistJSON,
 	}, nil
 }
 
@@ -397,6 +406,10 @@ func toPlaybook(rawPlaybook sqlPlaybook) (playbook.Playbook, error) {
 	p := rawPlaybook.Playbook
 	if err := json.Unmarshal(rawPlaybook.ChecklistsJSON, &p.Checklists); err != nil {
 		return playbook.Playbook{}, errors.Wrapf(err, "failed to unmarshal checklists json for playbook id: '%s'", p.ID)
+	}
+
+	if err := json.Unmarshal(rawPlaybook.PropertylistJSON, &p.Propertylist); err != nil {
+		return playbook.Playbook{}, errors.Wrapf(err, "failed to unmarshal propertylist json for playbook id: '%s'", p.ID)
 	}
 
 	return p, nil

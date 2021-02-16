@@ -51,6 +51,7 @@ var migrations = []Migration{
 						PostID VARCHAR(26) NOT NULL DEFAULT '',
 						PlaybookID VARCHAR(26) NOT NULL DEFAULT '',
 						ChecklistsJSON TEXT NOT NULL,
+						PropertylistJSON TEXT NOT NULL,
 						INDEX IR_Incident_TeamID (TeamID),
 						INDEX IR_Incident_TeamID_CommanderUserID (TeamID, CommanderUserID),
 						INDEX IR_Incident_ChannelID (ChannelID)
@@ -69,6 +70,7 @@ var migrations = []Migration{
 						CreateAt BIGINT NOT NULL,
 						DeleteAt BIGINT NOT NULL DEFAULT 0,
 						ChecklistsJSON TEXT NOT NULL,
+						PropertylistJSON TEXT NOT NULL,
 						NumStages BIGINT NOT NULL DEFAULT 0,
 						NumSteps BIGINT NOT NULL DEFAULT 0,
 						INDEX IR_Playbook_TeamID (TeamID),
@@ -104,7 +106,8 @@ var migrations = []Migration{
 						ActiveStage BIGINT NOT NULL,
 						PostID TEXT NOT NULL DEFAULT '',
 						PlaybookID TEXT NOT NULL DEFAULT '',
-						ChecklistsJSON JSON NOT NULL
+						ChecklistsJSON JSON NOT NULL,
+						PropertylistJSON JSON NOT NULL,
 					);
 				`); err != nil {
 					return errors.Wrapf(err, "failed creating table IR_Incident")
@@ -120,6 +123,7 @@ var migrations = []Migration{
 						CreateAt BIGINT NOT NULL,
 						DeleteAt BIGINT NOT NULL DEFAULT 0,
 						ChecklistsJSON JSON NOT NULL,
+						PropertylistJSON JSON NOT NULL,
 						NumStages BIGINT NOT NULL DEFAULT 0,
 						NumSteps BIGINT NOT NULL DEFAULT 0
 					);
@@ -189,13 +193,14 @@ var migrations = []Migration{
 			}
 
 			getIncidentsQuery := sqlStore.builder.
-				Select("ID", "ActiveStage", "ChecklistsJSON").
+				Select("ID", "ActiveStage", "ChecklistsJSON", "PropertylistJSON").
 				From("IR_Incident")
 
 			var incidents []struct {
-				ID             string
-				ActiveStage    int
-				ChecklistsJSON json.RawMessage
+				ID               string
+				ActiveStage      int
+				ChecklistsJSON   json.RawMessage
+				PropertylistJSON json.RawMessage
 			}
 			if err := sqlStore.selectBuilder(e, &incidents, getIncidentsQuery); err != nil {
 				return errors.Wrapf(err, "failed getting incidents to update their ActiveStageTitle")
@@ -205,6 +210,11 @@ var migrations = []Migration{
 				var checklists []playbook.Checklist
 				if err := json.Unmarshal(theIncident.ChecklistsJSON, &checklists); err != nil {
 					return errors.Wrapf(err, "failed to unmarshal checklists json for incident id: '%s'", theIncident.ID)
+				}
+
+				var propertylist playbook.Propertylist
+				if err := json.Unmarshal(theIncident.PropertylistJSON, &propertylist); err != nil {
+					return errors.Wrapf(err, "failed to unmarshal propertylist json for incident id: '%s'", theIncident.ID)
 				}
 
 				numChecklists := len(checklists)

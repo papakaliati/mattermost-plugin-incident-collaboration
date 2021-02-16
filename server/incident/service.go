@@ -445,6 +445,137 @@ func (s *ServiceImpl) ChangeCommander(incidentID, userID, commanderID string) er
 	return nil
 }
 
+func getPropertyListItem(incident *Incident, propertyID string) (*playbook.PropertylistItem, error) {
+	for _, v := range incident.Propertylist.Items {
+		if v.ID == propertyID {
+			return &v, nil
+		}
+	}
+
+	return nil, errors.Wrapf(nil, "failed to find property")
+}
+
+func getSelectionListItem(property *playbook.PropertylistItem, selectionID string) (*playbook.SelectionlistItem, error) {
+	for _, v := range property.Selection.Items {
+		if v.ID == selectionID {
+			return &v, nil
+		}
+	}
+
+	return nil, errors.Wrapf(nil, "failed to find property")
+}
+
+// ChangePropertySelectionValue processes a request from userID to change the property value of type selection
+// with id propertyID for incidentID to selectionID.
+func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID string, propertyID string, selectionID string) error {
+	incidentToModify, err := s.store.GetIncident(incidentID)
+	if err != nil {
+		return err
+	}
+
+	property, err := getPropertyListItem(incidentToModify, propertyID)
+	if err != nil {
+		return err
+	}
+
+	var propertyTitle = property.Title
+	var oldValueID = property.Selection.SelectedId
+	property.Selection.SelectedId = selectionID
+
+	oldSelection, err := getSelectionListItem(property, oldValueID)
+	var oldValue = oldSelection.Value
+
+	newSelection, err := getSelectionListItem(property, selectionID)
+	var newValue = newSelection.Value
+
+	if err = s.store.UpdateIncident(incidentToModify); err != nil {
+		return errors.Wrapf(err, "failed to update incident")
+	}
+
+	mainChannelID := incidentToModify.ChannelID
+	modifyMessage := fmt.Sprintf("changed the incident property '**@%s**' from **@%s** to **@%s**.",
+		propertyTitle, oldValue, newValue)
+	post, err := s.modificationMessage(userID, mainChannelID, modifyMessage)
+	if err != nil {
+		return err
+	}
+
+	event := &TimelineEvent{
+		IncidentID:    incidentID,
+		CreateAt:      post.CreateAt,
+		EventAt:       post.CreateAt,
+		EventType:     PropertyValueChanged,
+		Summary:       fmt.Sprintf("@%s to @%s", oldValue, newValue),
+		PostID:        post.Id,
+		SubjectUserID: userID,
+	}
+
+	if _, err = s.store.CreateTimelineEvent(event); err != nil {
+		return errors.Wrap(err, "failed to create timeline event")
+	}
+
+	s.telemetry.PropertyValueChanged(incidentToModify, userID)
+
+	if err = s.sendIncidentToClient(incidentID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ChangePropertyFreetextValue processes a request from userID to change the property value of type freetext
+// with id propertyID for incidentID to freetextValue.
+func (s *ServiceImpl) ChangePropertyFreetextValue(incidentID string, userID string, propertyID string, freetextValue string) error {
+	incidentToModify, err := s.store.GetIncident(incidentID)
+	if err != nil {
+		return err
+	}
+
+	property, err := getPropertyListItem(incidentToModify, propertyID)
+	if err != nil {
+		return err
+	}
+
+	var propertyTitle = property.Title
+	var oldValue = property.Treetext.Value
+	var newValue = freetextValue
+	property.Treetext.Value = freetextValue
+
+	if err = s.store.UpdateIncident(incidentToModify); err != nil {
+		return errors.Wrapf(err, "failed to update incident")
+	}
+
+	mainChannelID := incidentToModify.ChannelID
+	modifyMessage := fmt.Sprintf("changed the incident property '**@%s**' from **@%s** to **@%s**.",
+		propertyTitle, oldValue, newValue)
+	post, err := s.modificationMessage(userID, mainChannelID, modifyMessage)
+	if err != nil {
+		return err
+	}
+
+	event := &TimelineEvent{
+		IncidentID:    incidentID,
+		CreateAt:      post.CreateAt,
+		EventAt:       post.CreateAt,
+		EventType:     PropertyValueChanged,
+		Summary:       fmt.Sprintf("@%s to @%s", oldValue, newValue),
+		PostID:        post.Id,
+		SubjectUserID: userID,
+	}
+
+	if _, err = s.store.CreateTimelineEvent(event); err != nil {
+		return errors.Wrap(err, "failed to create timeline event")
+	}
+
+	s.telemetry.PropertyValueChanged(incidentToModify, userID)
+
+	if err = s.sendIncidentToClient(incidentID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ModifyCheckedState checks or unchecks the specified checklist item. Idempotent, will not perform
 // any action if the checklist item is already in the given checked state
 func (s *ServiceImpl) ModifyCheckedState(incidentID, userID, newState string, checklistNumber, itemNumber int) error {
@@ -668,6 +799,47 @@ func (s *ServiceImpl) RunChecklistItemSlashCommand(incidentID, userID string, ch
 }
 
 // AddChecklistItem adds an item to the specified checklist
+func (s *ServiceImpl) AddPropertylistItem(incidentID, userID string, propertylistItem playbook.PropertylistItem) error {
+	incidentToModify, err := s.propertylistParamsVerify(incidentID, userID)
+	if err != nil {
+		return err
+	}
+
+	incidentToModify.Propertylist.Items = append(incidentToModify.Propertylist.Items, propertylistItem)
+
+	if err = s.store.UpdateIncident(incidentToModify); err != nil {
+		return errors.Wrapf(err, "failed to update incident")
+	}
+
+	s.poster.PublishWebsocketEventToChannel(incidentUpdatedWSEvent, incidentToModify, incidentToModify.ChannelID)
+	s.telemetry.AddTask(incidentID, userID)
+
+	return nil
+}
+
+// RemovePropertylistItem removes the item at the given index from the given checklist
+func (s *ServiceImpl) RemovePropertylistItem(incidentID, userID string, itemNumber int) error {
+	incidentToModify, err := s.propertyItemParamsVerify(incidentID, userID, itemNumber)
+	if err != nil {
+		return err
+	}
+
+	incidentToModify.Propertylist.Items = append(
+		incidentToModify.Propertylist.Items[:itemNumber],
+		incidentToModify.Propertylist.Items[itemNumber+1:]...,
+	)
+
+	if err = s.store.UpdateIncident(incidentToModify); err != nil {
+		return errors.Wrapf(err, "failed to update incident")
+	}
+
+	s.poster.PublishWebsocketEventToChannel(incidentUpdatedWSEvent, incidentToModify, incidentToModify.ChannelID)
+	s.telemetry.RemoveTask(incidentID, userID)
+
+	return nil
+}
+
+// AddChecklistItem adds an item to the specified checklist
 func (s *ServiceImpl) AddChecklistItem(incidentID, userID string, checklistNumber int, checklistItem playbook.ChecklistItem) error {
 	incidentToModify, err := s.checklistParamsVerify(incidentID, userID, checklistNumber)
 	if err != nil {
@@ -704,6 +876,25 @@ func (s *ServiceImpl) RemoveChecklistItem(incidentID, userID string, checklistNu
 
 	s.poster.PublishWebsocketEventToChannel(incidentUpdatedWSEvent, incidentToModify, incidentToModify.ChannelID)
 	s.telemetry.RemoveTask(incidentID, userID)
+
+	return nil
+}
+
+// UpdatePropertylistItem changes the title of a specified checklist item
+func (s *ServiceImpl) UpdatePropertylistItem(incidentID, userID string, itemNumber int, newPropertylistItem playbook.PropertylistItem) error {
+	incidentToModify, err := s.propertyItemParamsVerify(incidentID, userID, itemNumber)
+	if err != nil {
+		return err
+	}
+
+	incidentToModify.Propertylist.Items[itemNumber] = newPropertylistItem
+
+	if err = s.store.UpdateIncident(incidentToModify); err != nil {
+		return errors.Wrapf(err, "failed to update incident")
+	}
+
+	s.poster.PublishWebsocketEventToChannel(incidentUpdatedWSEvent, incidentToModify, incidentToModify.ChannelID)
+	s.telemetry.RenameTask(incidentID, userID)
 
 	return nil
 }
@@ -760,6 +951,34 @@ func (s *ServiceImpl) MoveChecklistItem(incidentID, userID string, checklistNumb
 	return nil
 }
 
+// MovePropertylistItem moves a propertylist item to a new location
+func (s *ServiceImpl) MovePropertylistItem(incidentID, userID string, itemNumber, newLocation int) error {
+	incidentToModify, err := s.propertyItemParamsVerify(incidentID, userID, itemNumber)
+	if err != nil {
+		return err
+	}
+
+	// Move item
+	propertylist := incidentToModify.Propertylist.Items
+	itemMoved := propertylist[itemNumber]
+	// Delete item to move
+	propertylist = append(propertylist[:itemNumber], propertylist[itemNumber+1:]...)
+	// Insert item in new location
+	propertylist = append(propertylist, playbook.PropertylistItem{})
+	copy(propertylist[newLocation+1:], propertylist[newLocation:])
+	propertylist[newLocation] = itemMoved
+	incidentToModify.Propertylist.Items = propertylist
+
+	if err = s.store.UpdateIncident(incidentToModify); err != nil {
+		return errors.Wrapf(err, "failed to update incident")
+	}
+
+	s.poster.PublishWebsocketEventToChannel(incidentUpdatedWSEvent, incidentToModify, incidentToModify.ChannelID)
+	s.telemetry.MoveTask(incidentID, userID)
+
+	return nil
+}
+
 // GetChecklistAutocomplete returns the list of checklist items for incidentID to be used in autocomplete
 func (s *ServiceImpl) GetChecklistAutocomplete(incidentID string) ([]model.AutocompleteListItem, error) {
 	theIncident, err := s.store.GetIncident(incidentID)
@@ -782,6 +1001,26 @@ func (s *ServiceImpl) GetChecklistAutocomplete(incidentID string) ([]model.Autoc
 	return ret, nil
 }
 
+// GetPropertylistAutocomplete returns the list of checklist items for incidentID to be used in autocomplete
+func (s *ServiceImpl) GetPropertylistAutocomplete(incidentID string) ([]model.AutocompleteListItem, error) {
+	theIncident, err := s.store.GetIncident(incidentID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to retrieve incident")
+	}
+
+	ret := make([]model.AutocompleteListItem, 0)
+
+	for j, item := range theIncident.Propertylist.Items {
+		ret = append(ret, model.AutocompleteListItem{
+			Item:     fmt.Sprintf("%d %d", item.Title, j),
+			Hint:     fmt.Sprintf("\"%s\"", stripmd.Strip(item.Title)),
+			HelpText: "Check/uncheck this item",
+		})
+	}
+
+	return ret, nil
+}
+
 func (s *ServiceImpl) checklistParamsVerify(incidentID, userID string, checklistNumber int) (*Incident, error) {
 	incidentToModify, err := s.store.GetIncident(incidentID)
 	if err != nil {
@@ -794,6 +1033,19 @@ func (s *ServiceImpl) checklistParamsVerify(incidentID, userID string, checklist
 
 	if checklistNumber >= len(incidentToModify.Checklists) {
 		return nil, errors.New("invalid checklist number")
+	}
+
+	return incidentToModify, nil
+}
+
+func (s *ServiceImpl) propertylistParamsVerify(incidentID, userID string) (*Incident, error) {
+	incidentToModify, err := s.store.GetIncident(incidentID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to retrieve incident")
+	}
+
+	if !s.hasPermissionToModifyIncident(incidentToModify, userID) {
+		return nil, errors.New("user does not have permission to modify incident")
 	}
 
 	return incidentToModify, nil
@@ -820,6 +1072,19 @@ func (s *ServiceImpl) checklistItemParamsVerify(incidentID, userID string, check
 	}
 
 	if itemNumber >= len(incidentToModify.Checklists[checklistNumber].Items) {
+		return nil, errors.New("invalid item number")
+	}
+
+	return incidentToModify, nil
+}
+
+func (s *ServiceImpl) propertyItemParamsVerify(incidentID, userID string, itemNumber int) (*Incident, error) {
+	incidentToModify, err := s.propertylistParamsVerify(incidentID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if itemNumber >= len(incidentToModify.Propertylist.Items) {
 		return nil, errors.New("invalid item number")
 	}
 
@@ -1124,23 +1389,4 @@ func addRandomBits(name string) string {
 	}
 	randBits := model.NewId()
 	return fmt.Sprintf("%s-%s", name, randBits[:4])
-}
-
-func findNewestNonDeletedStatusPost(posts []StatusPost) *StatusPost {
-	var newest *StatusPost
-	for i, p := range posts {
-		if p.DeleteAt == 0 && (newest == nil || p.CreateAt > newest.CreateAt) {
-			newest = &posts[i]
-		}
-	}
-	return newest
-}
-
-func findNewestNonDeletedPostID(posts []StatusPost) string {
-	newest := findNewestNonDeletedStatusPost(posts)
-	if newest == nil {
-		return ""
-	}
-
-	return newest.ID
 }

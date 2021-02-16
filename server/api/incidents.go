@@ -60,6 +60,8 @@ func NewIncidentHandler(router *mux.Router, incidentService incident.Service, pl
 	incidentRouterAuthorized.Use(handler.checkEditPermissions)
 	incidentRouterAuthorized.HandleFunc("", handler.updateIncident).Methods(http.MethodPatch)
 	incidentRouterAuthorized.HandleFunc("/commander", handler.changeCommander).Methods(http.MethodPost)
+	incidentRouterAuthorized.HandleFunc("/property-selection-value/", handler.changePropertySelectionValue).Methods(http.MethodPost)
+	incidentRouterAuthorized.HandleFunc("/property-freetext-value/", handler.changePropertyFreetextValue).Methods(http.MethodPost)
 	incidentRouterAuthorized.HandleFunc("/update-status-dialog", handler.updateStatusDialog).Methods(http.MethodPost)
 	incidentRouterAuthorized.HandleFunc("/reminder/button-update", handler.reminderButtonUpdate).Methods(http.MethodPost)
 	incidentRouterAuthorized.HandleFunc("/reminder/button-dismiss", handler.reminderButtonDismiss).Methods(http.MethodPost)
@@ -79,6 +81,13 @@ func NewIncidentHandler(router *mux.Router, incidentService incident.Service, pl
 	checklistItem.HandleFunc("/state", handler.itemSetState).Methods(http.MethodPut)
 	checklistItem.HandleFunc("/assignee", handler.itemSetAssignee).Methods(http.MethodPut)
 	checklistItem.HandleFunc("/run", handler.itemRun).Methods(http.MethodPost)
+
+	propertyRouter := incidentRouterAuthorized.PathPrefix("/propertylist").Subrouter()
+
+	propertyRouter.HandleFunc("", handler.propertylistItemDelete).Methods(http.MethodDelete)
+	propertyRouter.HandleFunc("/add", handler.addPropertylistItem).Methods(http.MethodPut)
+	propertyRouter.HandleFunc("/reorder", handler.reorderPropertylistItem).Methods(http.MethodPut)
+	propertyRouter.HandleFunc("/update", handler.updatePropertylistItem).Methods(http.MethodPut)
 
 	telemetryRouterAuthorized := router.PathPrefix("/telemetry").Subrouter()
 	telemetryRouterAuthorized.Use(handler.checkViewPermissions)
@@ -545,6 +554,50 @@ func (h *IncidentHandler) changeCommander(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
+// changePropertySelectionValue handles the /incidents/{id}/property-selection-value api endpoint.
+func (h *IncidentHandler) changePropertySelectionValue(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := r.Header.Get("Mattermost-User-ID")
+
+	var params struct {
+		PropertyListItemID string `json:"property_id"`
+		SelectionID        string `json:"selection_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		HandleErrorWithCode(w, http.StatusBadRequest, "could not decode request body", err)
+		return
+	}
+
+	if err := h.incidentService.ChangePropertySelectionValue(vars["id"], userID, params.PropertyListItemID, params.SelectionID); err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// changePropertySelectionValue handles the /incidents/{id}/property-freetext-value api endpoint.
+func (h *IncidentHandler) changePropertyFreetextValue(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := r.Header.Get("Mattermost-User-ID")
+
+	var params struct {
+		PropertyListItemID string `json:"property_id"`
+		FreetextValue      string `json:"freetext_value"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		HandleErrorWithCode(w, http.StatusBadRequest, "could not decode request body", err)
+		return
+	}
+
+	if err := h.incidentService.ChangePropertyFreetextValue(vars["id"], userID, params.PropertyListItemID, params.FreetextValue); err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // updateStatusDialog handles the POST /incidents/{id}/update-status-dialog endpoint, called when a
 // user submits the Update Status dialog.
 func (h *IncidentHandler) updateStatusDialog(w http.ResponseWriter, r *http.Request) {
@@ -898,6 +951,107 @@ func (h *IncidentHandler) reorderChecklist(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *IncidentHandler) propertylistItemDelete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	itemNum, err := strconv.Atoi(vars["item"])
+	if err != nil {
+		HandleErrorWithCode(w, http.StatusBadRequest, "failed to parse item", err)
+		return
+	}
+	userID := r.Header.Get("Mattermost-User-ID")
+
+	if err := h.incidentService.RemovePropertylistItem(id, userID, itemNum); err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *IncidentHandler) addPropertylistItem(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	userID := r.Header.Get("Mattermost-User-ID")
+
+	var propertylistItem playbook.PropertylistItem
+	if err := json.NewDecoder(r.Body).Decode(&propertylistItem); err != nil {
+		HandleErrorWithCode(w, http.StatusBadRequest, "failed to decode PropertylistItem", err)
+		return
+	}
+
+	propertylistItem.Title = strings.TrimSpace(propertylistItem.Title)
+	if propertylistItem.Title == "" {
+		HandleErrorWithCode(w, http.StatusBadRequest, "bad parameter: propertylist item title",
+			errors.New("propertylist item title must not be blank"))
+		return
+	}
+
+	if err := h.incidentService.AddPropertylistItem(id, userID, propertylistItem); err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *IncidentHandler) reorderPropertylistItem(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	userID := r.Header.Get("Mattermost-User-ID")
+
+	var modificationParams struct {
+		ItemNum     int `json:"item_num"`
+		NewLocation int `json:"new_location"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&modificationParams); err != nil {
+		HandleErrorWithCode(w, http.StatusBadRequest, "failed to unmarshal property list item edit params", err)
+		return
+	}
+
+	if err := h.incidentService.MovePropertylistItem(id, userID, modificationParams.ItemNum, modificationParams.NewLocation); err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *IncidentHandler) updatePropertylistItem(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	userID := r.Header.Get("Mattermost-User-ID")
+
+	itemNum, err := strconv.Atoi(vars["item"])
+	if err != nil {
+		HandleErrorWithCode(w, http.StatusBadRequest, "failed to parse item", err)
+		return
+	}
+	var propertylistItem playbook.PropertylistItem
+	if err := json.NewDecoder(r.Body).Decode(&propertylistItem); err != nil {
+		HandleErrorWithCode(w, http.StatusBadRequest, "failed to decode PropertylistItem", err)
+		return
+	}
+
+	propertylistItem.Title = strings.TrimSpace(propertylistItem.Title)
+	if propertylistItem.Title == "" {
+		HandleErrorWithCode(w, http.StatusBadRequest, "bad parameter: propertylist item title",
+			errors.New("propertylist item title must not be blank"))
+		return
+	}
+
+	if err := h.incidentService.UpdatePropertylistItem(id, userID, itemNum, propertylistItem); err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 // telemetryForIncident handles the /telemetry/incident/{id}?action=the_action endpoint. The frontend

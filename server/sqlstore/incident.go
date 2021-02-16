@@ -18,7 +18,8 @@ import (
 
 type sqlIncident struct {
 	incident.Incident
-	ChecklistsJSON json.RawMessage
+	ChecklistsJSON   json.RawMessage
+	PropertylistJSON json.RawMessage
 }
 
 // incidentStore holds the information needed to fulfill the methods in the store interface.
@@ -46,7 +47,7 @@ func NewIncidentStore(pluginAPI PluginAPIClient, log bot.Logger, sqlStore *SQLSt
 	incidentSelect := sqlStore.builder.
 		Select("i.ID", "c.DisplayName AS Name", "i.Description", "i.CommanderUserID", "i.TeamID", "i.ChannelID",
 			"c.CreateAt", "i.EndAt", "c.DeleteAt", "i.PostID", "i.PlaybookID",
-			"i.ChecklistsJSON", "COALESCE(i.ReminderPostID, '') ReminderPostID", "i.PreviousReminder", "i.BroadcastChannelID",
+			"i.ChecklistsJSON", "i.PropertylistJSON", "COALESCE(i.ReminderPostID, '') ReminderPostID", "i.PreviousReminder", "i.BroadcastChannelID",
 			"COALESCE(ReminderMessageTemplate, '') ReminderMessageTemplate").
 		From("IR_Incident AS i").
 		Join("Channels AS c ON (c.Id = i.ChannelId)")
@@ -231,6 +232,7 @@ func (s *incidentStore) CreateIncident(newIncident *incident.Incident) (out *inc
 			"PostID":                  rawIncident.PostID,
 			"PlaybookID":              rawIncident.PlaybookID,
 			"ChecklistsJSON":          rawIncident.ChecklistsJSON,
+			"PropertylistJSON":        rawIncident.PropertylistJSON,
 			"ReminderPostID":          rawIncident.ReminderPostID,
 			"PreviousReminder":        rawIncident.PreviousReminder,
 			"BroadcastChannelID":      rawIncident.BroadcastChannelID,
@@ -274,6 +276,7 @@ func (s *incidentStore) UpdateIncident(newIncident *incident.Incident) error {
 			"Description":        rawIncident.Description,
 			"CommanderUserID":    rawIncident.CommanderUserID,
 			"ChecklistsJSON":     rawIncident.ChecklistsJSON,
+			"PropertylistJSON":   rawIncident.PropertylistJSON,
 			"ReminderPostID":     rawIncident.ReminderPostID,
 			"PreviousReminder":   rawIncident.PreviousReminder,
 			"BroadcastChannelID": rawIncident.BroadcastChannelID,
@@ -583,6 +586,10 @@ func (s *incidentStore) toIncident(rawIncident sqlIncident) (*incident.Incident,
 		return nil, errors.Wrapf(err, "failed to unmarshal checklists json for incident id: %s", rawIncident.ID)
 	}
 
+	if err := json.Unmarshal(rawIncident.PropertylistJSON, &i.Propertylist); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal propertylist json for incident id: %s", rawIncident.ID)
+	}
+
 	return &i, nil
 }
 
@@ -593,9 +600,16 @@ func toSQLIncident(origIncident incident.Incident) (*sqlIncident, error) {
 		return nil, errors.Wrapf(err, "failed to marshal checklist json for incident id: '%s'", origIncident.ID)
 	}
 
+	newPropertylist := populatePropertylistIDs(origIncident.Propertylist)
+	propertylistJSON, err := propertylistToJSON(newPropertylist)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to marshal checklist json for incident id: '%s'", origIncident.ID)
+	}
+
 	return &sqlIncident{
-		Incident:       origIncident,
-		ChecklistsJSON: checklistsJSON,
+		Incident:         origIncident,
+		ChecklistsJSON:   checklistsJSON,
+		PropertylistJSON: propertylistJSON,
 	}, nil
 }
 
@@ -621,6 +635,21 @@ func populateChecklistIDs(checklists []playbook.Checklist) []playbook.Checklist 
 	return newChecklists
 }
 
+// populateChecklistIDs returns a cloned slice with ids entered for checklists and checklist items.
+func populatePropertylistIDs(propertylist playbook.Propertylist) playbook.Propertylist {
+	var newPropertylist = propertylist.Clone()
+	if newPropertylist.ID == "" {
+		newPropertylist.ID = model.NewId()
+	}
+	for j, item := range newPropertylist.Items {
+		if item.ID == "" {
+			newPropertylist.Items[j].ID = model.NewId()
+		}
+	}
+
+	return newPropertylist
+}
+
 // An incident needs to assign unique ids to its checklist items
 func checklistsToJSON(checklists []playbook.Checklist) (json.RawMessage, error) {
 	checklistsJSON, err := json.Marshal(checklists)
@@ -629,6 +658,16 @@ func checklistsToJSON(checklists []playbook.Checklist) (json.RawMessage, error) 
 	}
 
 	return checklistsJSON, nil
+}
+
+// An incident needs to assign unique ids to its propertylist items
+func propertylistToJSON(propertylist playbook.Propertylist) (json.RawMessage, error) {
+	propertylistJSON, err := json.Marshal(propertylist)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal propertylist json")
+	}
+
+	return propertylistJSON, nil
 }
 
 func addStatusPostsToIncidents(statusIDs incidentStatusPosts, incidents []incident.Incident) {
