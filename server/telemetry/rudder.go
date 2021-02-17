@@ -23,13 +23,13 @@ type RudderTelemetry struct {
 
 // Unique strings that identify each of the tracked events
 const (
-	eventIncident         = "incident"
-	actionCreate          = "create"
-	actionEnd             = "end"
-	actionRestart         = "restart"
-	actionChangeCommander = "change_commander"
-	actionUpdateStatus    = "update_status"
-
+	eventIncident             = "incident"
+	actionCreate              = "create"
+	actionEnd                 = "end"
+	actionRestart             = "restart"
+	actionChangeCommander     = "change_commander"
+	actionChangeProperty      = "change_property"
+	actionUpdateStatus        = "update_status"
 	eventTasks                = "tasks"
 	actionAddTask             = "add_task"
 	actionRemoveTask          = "remove_task"
@@ -143,6 +143,13 @@ func (t *RudderTelemetry) RestartIncident(incdnt *incident.Incident, userID stri
 func (t *RudderTelemetry) ChangeCommander(incdnt *incident.Incident, userID string) {
 	properties := incidentProperties(incdnt, userID)
 	properties["Action"] = actionChangeCommander
+	t.track(eventIncident, properties)
+}
+
+// PropertyValueChanged tracks changes in properties
+func (t *RudderTelemetry) PropertyValueChanged(incdnt *incident.Incident, userID string) {
+	properties := incidentProperties(incdnt, userID)
+	properties["Action"] = actionChangeProperty
 	t.track(eventIncident, properties)
 }
 

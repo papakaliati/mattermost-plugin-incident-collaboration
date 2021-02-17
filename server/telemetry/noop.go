@@ -78,6 +78,10 @@ func (t *NoopTelemetry) DeletePlaybook(playbook.Playbook, string) {
 func (t *NoopTelemetry) ChangeCommander(*incident.Incident, string) {
 }
 
+// PropertyValueChanged does nothing
+func (t *NoopTelemetry) PropertyValueChanged(*incident.Incident, string) {
+}
+
 // RunTaskSlashCommand does nothing
 func (t *NoopTelemetry) RunTaskSlashCommand(string, string) {
 }

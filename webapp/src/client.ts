@@ -248,6 +248,14 @@ export async function clientAddChecklistItem(incidentID: string, checklistNum: n
     return data;
 }
 
+export async function clientAddPropertyistItem(incidentID: string, checklistItem: PropertylistItem) {
+    const data = await doPut(`${apiUrl}/incidents/${incidentID}/propertylist/add`,
+        JSON.stringify(checklistItem),
+    );
+
+    return data;
+}
+
 export async function clientRemoveChecklistItem(incidentID: string, checklistNum: number, itemNum: number) {
     const {data} = await doFetchWithResponse(`${apiUrl}/incidents/${incidentID}/checklists/${checklistNum}/item/${itemNum}`, {
         method: 'delete',
@@ -256,6 +264,16 @@ export async function clientRemoveChecklistItem(incidentID: string, checklistNum
 
     return data;
 }
+
+export async function clientRemovePropertylistItem(incidentID: string, itemNum: number) {
+    const {data} = await doFetchWithResponse(`${apiUrl}/incidents/${incidentID}/propertylist/${itemNum}`, {
+        method: 'delete',
+        body: '',
+    });
+
+    return data;
+}
+
 
 export async function clientEditChecklistItem(incidentID: string, checklistNum: number, itemNum: number, newItem: ChecklistItem) {
     const data = await doPut(`${apiUrl}/incidents/${incidentID}/checklists/${checklistNum}/item/${itemNum}`,
@@ -267,8 +285,28 @@ export async function clientEditChecklistItem(incidentID: string, checklistNum: 
     return data;
 }
 
+export async function clientEditPropertylistItem(incidentID: string, itemNum: number, newItem: PropertylistItem) {
+    const data = await doPut(`${apiUrl}/incidents/${incidentID}/propertylist/${itemNum}`,
+        JSON.stringify({
+            item: newItem,
+        }));
+
+    return data;
+}
+
 export async function clientReorderChecklist(incidentID: string, checklistNum: number, itemNum: number, newLocation: number) {
     const data = await doPut(`${apiUrl}/incidents/${incidentID}/checklists/${checklistNum}/reorder`,
+        JSON.stringify({
+            item_num: itemNum,
+            new_location: newLocation,
+        }),
+    );
+
+    return data;
+}
+
+export async function clientReorderPropertylistItem(incidentID: string, itemNum: number, newLocation: number) {
+    const data = await doPut(`${apiUrl}/incidents/${incidentID}/propertylist/reorder`,
         JSON.stringify({
             item_num: itemNum,
             new_location: newLocation,
