@@ -473,11 +473,12 @@ func getSelectionListItem(property *playbook.PropertylistItem, selectionID strin
 // ChangePropertySelectionValue processes a request from userID to change the property value of type selection
 // with id propertyID for incidentID to selectionID.
 func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID string, propertyID string, selectionID string) error {
-
 	incidentToModify, err := s.store.GetIncident(incidentID)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("new vals %s %s", propertyID, selectionID)
 
 	property, err := getPropertyListItem(incidentToModify, propertyID)
 	if err != nil {
@@ -492,22 +493,23 @@ func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID str
 		}
 	}
 
-	property.Selection.SelectedId = selectionID
+	var oldValue = ""
+	if oldValueID != "" {
+		oldSelection, err := getSelectionListItem(property, oldValueID)
+		if err == nil {
+			oldValue = oldSelection.Value
+		}
+	}
 
-	oldSelection, err := getSelectionListItem(property, oldValueID)
-	var oldValue = oldSelection.Value
-	fmt.Println("oldValue")
-
+	var newValue = ""
 	newSelection, err := getSelectionListItem(property, selectionID)
-	var newValue = newSelection.Value
-	fmt.Println("newValue")
-
-	//fmt.Println(incidentToModify.Propertylist.Items[0])
+	if err == nil {
+		newValue = newSelection.Value
+	}
 
 	if err = s.store.UpdateIncident(incidentToModify); err != nil {
 		return errors.Wrapf(err, "failed to update incident")
 	}
-	fmt.Println("UpdateIncident")
 
 	mainChannelID := incidentToModify.ChannelID
 	modifyMessage := fmt.Sprintf("changed the incident property '**%s**' from **%s** to **%s**.",
@@ -556,7 +558,12 @@ func (s *ServiceImpl) ChangePropertyFreetextValue(incidentID string, userID stri
 	var propertyTitle = property.Title
 	var oldValue = property.Treetext.Value
 	var newValue = freetextValue
-	property.Treetext.Value = freetextValue
+
+	for i, v := range incidentToModify.Propertylist.Items {
+		if v.ID == propertyID {
+			incidentToModify.Propertylist.Items[i].Treetext.Value = freetextValue
+		}
+	}
 
 	if err = s.store.UpdateIncident(incidentToModify); err != nil {
 		return errors.Wrapf(err, "failed to update incident")

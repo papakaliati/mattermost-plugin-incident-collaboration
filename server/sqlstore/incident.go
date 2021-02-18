@@ -444,15 +444,22 @@ func (s *incidentStore) GetIncident(incidentID string) (out *incident.Incident, 
 		return nil, errors.Wrap(err, "failed to get timelineEvents")
 	}
 
+	fmt.Println("Commit timeline")
+
 	if err = tx.Commit(); err != nil {
 		return out, errors.Wrap(err, "could not commit transaction")
 	}
+
+	fmt.Println("check statusPosts")
 
 	for _, p := range statusPosts {
 		out.StatusPosts = append(out.StatusPosts, p.StatusPost)
 	}
 
+	fmt.Println("add TimelineEvents")
 	out.TimelineEvents = append(out.TimelineEvents, timelineEvents...)
+
+	fmt.Println("going back")
 
 	return out, nil
 }
