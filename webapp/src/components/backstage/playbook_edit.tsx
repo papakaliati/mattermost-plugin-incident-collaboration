@@ -210,9 +210,6 @@ const PlaybookEdit: FC<Props> = (props: Props) => {
                         return;
                     }
 
-                    let propertylist: Propertylist = generatePropertyList();
-                    template.template.propertylist = propertylist
-
                     setPlaybook({
                         ...template.template,
                         team_id: props.currentTeam.id,
@@ -228,9 +225,6 @@ const PlaybookEdit: FC<Props> = (props: Props) => {
                     const fetchedPlaybook = await clientFetchPlaybook(urlParams.playbookId);
 
                     fetchedPlaybook.member_ids = fetchedPlaybook.member_ids || [currentUserId];
-
-                    let propertylist: Propertylist = generatePropertyList();
-                    fetchedPlaybook.properties  = propertylist
 
                     setPlaybook(fetchedPlaybook);
                     setFetchingState(FetchingStateType.fetched);

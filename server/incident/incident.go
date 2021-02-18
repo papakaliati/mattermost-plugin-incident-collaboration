@@ -78,8 +78,12 @@ func (i *Incident) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	old.Propertylist = playbook.Propertylist{}
-	old.Propertylist.Items = []playbook.PropertylistItem{}
+	if old.Checklists == nil {
+		old.Propertylist = playbook.Propertylist{}
+		if old.Propertylist.Items == nil {
+			old.Propertylist.Items = []playbook.PropertylistItem{}
+		}
+	}
 
 	if old.StatusPosts == nil {
 		old.StatusPosts = []StatusPost{}

@@ -99,7 +99,11 @@ export const PropertyListEditor = (props: Props): React.ReactElement => {
 
 
     const handleAddPropertylistItem = () => {
-        onAddPropertylistItem(newPropertylistItem('New Property', '', false, PropertyType.Freetext));
+        var id = props.propertylist.items.length + 1;
+        if (!props.propertylist.id){
+            props.propertylist.id = "1";
+        }
+        onAddPropertylistItem(newPropertylistItem(id.toString(), 'New Property', false, PropertyType.Freetext));
     };
 
     return (

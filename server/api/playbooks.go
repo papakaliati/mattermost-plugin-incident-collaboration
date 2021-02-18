@@ -49,9 +49,12 @@ func NewPlaybookHandler(router *mux.Router, playbookService playbook.Service, ap
 func (h *PlaybookHandler) createPlaybook(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("Mattermost-User-ID")
 
+	// bodyBytes, err := ioutil.ReadAll(r.Body)
+	// bodyString := string(bodyBytes)
+
 	var pbook playbook.Playbook
 	if err := json.NewDecoder(r.Body).Decode(&pbook); err != nil {
-		HandleErrorWithCode(w, http.StatusBadRequest, "unable to decode playbook", err)
+		HandleErrorWithCode(w, http.StatusBadRequest, "unable to decode playbook"+" error: "+err.Error(), err)
 		return
 	}
 

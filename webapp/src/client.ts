@@ -48,13 +48,13 @@ export async function fetchIncidents(params: FetchIncidentsParams) {
         data = {items: [], total_count: 0, page_count: 0, has_more: false} as FetchIncidentsReturn;
     }
 
-    let pl: Propertylist = generatePropertyList()
-    const inc = data as FetchIncidentsReturn
-    inc.items.forEach(e => {
-        e.propertylist= pl
-    });
-
-    return inc;
+    // let pl: Propertylist = generatePropertyList()
+    // const inc = data as FetchIncidentsReturn
+    // inc.items.forEach(e => {
+    //     e.propertylist= pl
+    // });
+    // return inc;
+    
     return data as FetchIncidentsReturn;
 }
 

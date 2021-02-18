@@ -601,6 +601,8 @@ func toSQLIncident(origIncident incident.Incident) (*sqlIncident, error) {
 	}
 
 	newPropertylist := populatePropertylistIDs(origIncident.Propertylist)
+	fmt.Println(newPropertylist)
+
 	propertylistJSON, err := propertylistToJSON(newPropertylist)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to marshal checklist json for incident id: '%s'", origIncident.ID)
@@ -644,6 +646,11 @@ func populatePropertylistIDs(propertylist playbook.Propertylist) playbook.Proper
 	for j, item := range newPropertylist.Items {
 		if item.ID == "" {
 			newPropertylist.Items[j].ID = model.NewId()
+		}
+		for i, option := range item.Selection.Items {
+			if option.ID == "" {
+				newPropertylist.Items[j].Selection.Items[i].ID = model.NewId()
+			}
 		}
 	}
 

@@ -44,6 +44,28 @@ func (m *MockService) AddChecklistItem(arg0, arg1 string, arg2 int, arg3 playboo
 	return ret0
 }
 
+// AddPropertylistItem mocks base method
+func (m *MockService) AddPropertylistItem(arg0, arg1 string, arg2 playbook.PropertylistItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddPropertylistItem", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+func (m *MockService) ChangePropertySelectionValue(arg0 string, arg1 string, arg2 string, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangePropertySelectionValue", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+func (m *MockService) ChangePropertyFreetextValue(arg0 string, arg1 string, arg2 string, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangePropertyFreetextValue", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
 // AddChecklistItem indicates an expected call of AddChecklistItem
 func (mr *MockServiceMockRecorder) AddChecklistItem(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
@@ -97,6 +119,15 @@ func (mr *MockServiceMockRecorder) CreateIncident(arg0, arg1, arg2 interface{}) 
 func (m *MockService) GetChecklistAutocomplete(arg0 string) ([]model.AutocompleteListItem, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChecklistAutocomplete", arg0)
+	ret0, _ := ret[0].([]model.AutocompleteListItem)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPropertylistAutocomplete mocks base method
+func (m *MockService) GetPropertylistAutocomplete(arg0 string) ([]model.AutocompleteListItem, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPropertylistAutocomplete", arg0)
 	ret0, _ := ret[0].([]model.AutocompleteListItem)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -231,6 +262,14 @@ func (m *MockService) MoveChecklistItem(arg0, arg1 string, arg2, arg3, arg4 int)
 	return ret0
 }
 
+// MovePropertylistItem mocks base method
+func (m *MockService) MovePropertylistItem(arg0, arg1 string, arg2, arg3 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MovePropertylistItem", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
 // MoveChecklistItem indicates an expected call of MoveChecklistItem
 func (mr *MockServiceMockRecorder) MoveChecklistItem(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
@@ -283,6 +322,21 @@ func (mr *MockServiceMockRecorder) OpenUpdateStatusDialog(arg0, arg1 interface{}
 func (m *MockService) RemoveChecklistItem(arg0, arg1 string, arg2, arg3 int) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveChecklistItem", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+func (m *MockService) UpdatePropertylistItem(arg0, arg1 string, arg2 int, arg3 playbook.PropertylistItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePropertylistItem", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemovePropertylistItem mocks base method
+func (m *MockService) RemovePropertylistItem(arg0, arg1 string, arg2 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemovePropertylistItem", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }

@@ -813,6 +813,7 @@ func TestIncidents(t *testing.T) {
 			PostID:          "",
 			PlaybookID:      "",
 			Checklists:      nil,
+			Propertylist:    playbook.Propertylist{},
 		}
 
 		pluginAPI.On("GetChannel", testIncident.ChannelID).
@@ -852,6 +853,7 @@ func TestIncidents(t *testing.T) {
 			PostID:          "",
 			PlaybookID:      "",
 			Checklists:      []playbook.Checklist{},
+			Propertylist:    playbook.Propertylist{},
 			StatusPosts:     []incident.StatusPost{},
 			TimelineEvents:  []incident.TimelineEvent{},
 		}
@@ -898,6 +900,7 @@ func TestIncidents(t *testing.T) {
 			PostID:          "",
 			PlaybookID:      "",
 			Checklists:      []playbook.Checklist{},
+			Propertylist:    playbook.Propertylist{},
 			StatusPosts:     []incident.StatusPost{},
 			TimelineEvents:  []incident.TimelineEvent{},
 		}
@@ -942,6 +945,7 @@ func TestIncidents(t *testing.T) {
 			PostID:          "",
 			PlaybookID:      "",
 			Checklists:      nil,
+			Propertylist:    playbook.Propertylist{},
 		}
 
 		pluginAPI.On("GetChannel", testIncident.ChannelID).
@@ -979,6 +983,7 @@ func TestIncidents(t *testing.T) {
 			PostID:          "",
 			PlaybookID:      "",
 			Checklists:      []playbook.Checklist{},
+			Propertylist:    playbook.Propertylist{},
 		}
 
 		testIncidentMetadata := incident.Metadata{
@@ -1033,6 +1038,7 @@ func TestIncidents(t *testing.T) {
 			PostID:          "",
 			PlaybookID:      "",
 			Checklists:      nil,
+			Propertylist:    playbook.Propertylist{},
 		}
 
 		pluginAPI.On("GetChannel", testIncident.ChannelID).
@@ -1072,6 +1078,7 @@ func TestIncidents(t *testing.T) {
 			PostID:          "",
 			PlaybookID:      "",
 			Checklists:      []playbook.Checklist{},
+			Propertylist:    playbook.Propertylist{},
 		}
 
 		testIncidentMetadata := incident.Metadata{
@@ -1128,6 +1135,7 @@ func TestIncidents(t *testing.T) {
 			PostID:          "",
 			PlaybookID:      "",
 			Checklists:      []playbook.Checklist{},
+			Propertylist:    playbook.Propertylist{},
 		}
 
 		testIncidentMetadata := incident.Metadata{
@@ -1182,6 +1190,7 @@ func TestIncidents(t *testing.T) {
 			Checklists:      []playbook.Checklist{},
 			StatusPosts:     []incident.StatusPost{},
 			TimelineEvents:  []incident.TimelineEvent{},
+			Propertylist:    playbook.Propertylist{},
 		}
 
 		pluginAPI.On("HasPermissionTo", mock.Anything, model.PERMISSION_MANAGE_SYSTEM).Return(false)

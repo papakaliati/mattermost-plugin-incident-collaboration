@@ -60,8 +60,8 @@ func NewIncidentHandler(router *mux.Router, incidentService incident.Service, pl
 	incidentRouterAuthorized.Use(handler.checkEditPermissions)
 	incidentRouterAuthorized.HandleFunc("", handler.updateIncident).Methods(http.MethodPatch)
 	incidentRouterAuthorized.HandleFunc("/commander", handler.changeCommander).Methods(http.MethodPost)
-	incidentRouterAuthorized.HandleFunc("/property-selection-value/", handler.changePropertySelectionValue).Methods(http.MethodPost)
-	incidentRouterAuthorized.HandleFunc("/property-freetext-value/", handler.changePropertyFreetextValue).Methods(http.MethodPost)
+	incidentRouterAuthorized.HandleFunc("/property-selection-value", handler.changePropertySelectionValue).Methods(http.MethodPost)
+	incidentRouterAuthorized.HandleFunc("/property-freetext-value", handler.changePropertyFreetextValue).Methods(http.MethodPost)
 	incidentRouterAuthorized.HandleFunc("/update-status-dialog", handler.updateStatusDialog).Methods(http.MethodPost)
 	incidentRouterAuthorized.HandleFunc("/reminder/button-update", handler.reminderButtonUpdate).Methods(http.MethodPost)
 	incidentRouterAuthorized.HandleFunc("/reminder/button-dismiss", handler.reminderButtonDismiss).Methods(http.MethodPost)
@@ -314,6 +314,7 @@ func (h *IncidentHandler) createIncident(newIncident incident.Incident, userID s
 		}
 
 		newIncident.Checklists = pb.Checklists
+		newIncident.Propertylist = pb.Propertylist
 		public = pb.CreatePublicIncident
 
 		newIncident.BroadcastChannelID = pb.BroadcastChannelID
@@ -558,7 +559,6 @@ func (h *IncidentHandler) changeCommander(w http.ResponseWriter, r *http.Request
 func (h *IncidentHandler) changePropertySelectionValue(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := r.Header.Get("Mattermost-User-ID")
-
 	var params struct {
 		PropertyListItemID string `json:"property_id"`
 		SelectionID        string `json:"selection_id"`
@@ -572,6 +572,7 @@ func (h *IncidentHandler) changePropertySelectionValue(w http.ResponseWriter, r 
 		HandleError(w, err)
 		return
 	}
+	fmt.Println("ENDED ChangePropertySelectionValue")
 
 	w.WriteHeader(http.StatusOK)
 }

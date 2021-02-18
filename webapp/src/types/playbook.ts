@@ -41,6 +41,7 @@ export interface FetchIncidentsParams {
 }
 
 export interface Propertylist {
+    id?: string;
     title: string;
     items: PropertylistItem[];
 }
@@ -106,6 +107,7 @@ export interface ChecklistItem {
 
 export function emptyPlaybook(): Playbook {
     return {
+        id: '',
         title: '',
         description: '',
         team_id: '',
@@ -128,6 +130,7 @@ export function emptyChecklist(): Checklist {
 
 export function emptyPropertylist(): Propertylist {
     return {
+        id:'',
         title: 'Default Checklist',
         items: [emptyPropertylistItem()],
     };
@@ -190,6 +193,12 @@ export const newChecklistItem = (title = '', description = '', command = '', sta
     command,
     command_last_run: 0,
     state,
+});
+
+export const newPropertylist = (id = '', title = '', items = [newPropertylistItem()] ): Propertylist => ({
+    id,
+    title,
+    items
 });
 
 export const newPropertylistItem = (id = '', title = '', optional = false, type = PropertyType.Freetext, selection = newSelectionlist(), freetext = newFreetextOption()): PropertylistItem => ({

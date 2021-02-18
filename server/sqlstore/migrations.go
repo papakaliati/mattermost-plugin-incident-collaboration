@@ -57,7 +57,7 @@ var migrations = []Migration{
 						INDEX IR_Incident_ChannelID (ChannelID)
 					)
 				` + MySQLCharset); err != nil {
-					return errors.Wrapf(err, "failed creating table IR_Incident")
+					return errors.Wrapf(err, "failed creating table IR_Incident 1")
 				}
 
 				if _, err := e.Exec(`
@@ -107,10 +107,10 @@ var migrations = []Migration{
 						PostID TEXT NOT NULL DEFAULT '',
 						PlaybookID TEXT NOT NULL DEFAULT '',
 						ChecklistsJSON JSON NOT NULL,
-						PropertylistJSON JSON NOT NULL,
+						PropertylistJSON JSON NOT NULL
 					);
 				`); err != nil {
-					return errors.Wrapf(err, "failed creating table IR_Incident")
+					return errors.Wrapf(err, "failed creating table IR_Incident 2")
 				}
 
 				if _, err := e.Exec(`

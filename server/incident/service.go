@@ -95,6 +95,11 @@ func (s *ServiceImpl) CreateIncident(incdnt *Incident, userID string, public boo
 				Items: []playbook.ChecklistItem{},
 			},
 		}
+		incdnt.Propertylist = playbook.Propertylist{
+			ID:    DialogFieldPlaybookIDKey,
+			Title: "",
+			Items: []playbook.PropertylistItem{},
+		}
 	}
 
 	incdnt, err = s.store.CreateIncident(incdnt)
@@ -468,6 +473,7 @@ func getSelectionListItem(property *playbook.PropertylistItem, selectionID strin
 // ChangePropertySelectionValue processes a request from userID to change the property value of type selection
 // with id propertyID for incidentID to selectionID.
 func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID string, propertyID string, selectionID string) error {
+
 	incidentToModify, err := s.store.GetIncident(incidentID)
 	if err != nil {
 		return err
@@ -480,20 +486,31 @@ func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID str
 
 	var propertyTitle = property.Title
 	var oldValueID = property.Selection.SelectedId
+	for i, v := range incidentToModify.Propertylist.Items {
+		if v.ID == propertyID {
+			incidentToModify.Propertylist.Items[i].Selection.SelectedId = selectionID
+		}
+	}
+
 	property.Selection.SelectedId = selectionID
 
 	oldSelection, err := getSelectionListItem(property, oldValueID)
 	var oldValue = oldSelection.Value
+	fmt.Println("oldValue")
 
 	newSelection, err := getSelectionListItem(property, selectionID)
 	var newValue = newSelection.Value
+	fmt.Println("newValue")
+
+	//fmt.Println(incidentToModify.Propertylist.Items[0])
 
 	if err = s.store.UpdateIncident(incidentToModify); err != nil {
 		return errors.Wrapf(err, "failed to update incident")
 	}
+	fmt.Println("UpdateIncident")
 
 	mainChannelID := incidentToModify.ChannelID
-	modifyMessage := fmt.Sprintf("changed the incident property '**@%s**' from **@%s** to **@%s**.",
+	modifyMessage := fmt.Sprintf("changed the incident property '**%s**' from **%s** to **%s**.",
 		propertyTitle, oldValue, newValue)
 	post, err := s.modificationMessage(userID, mainChannelID, modifyMessage)
 	if err != nil {

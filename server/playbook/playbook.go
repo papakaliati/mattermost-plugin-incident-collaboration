@@ -90,19 +90,27 @@ func (c Checklist) Clone() Checklist {
 
 func (c Propertylist) Clone() Propertylist {
 	newPropertylist := c
-
-	for i, c := range newPropertylist.Items {
-		var item = c.Clone()
-		newPropertylist.Items[i] = item
-	}
-
 	return newPropertylist
 }
 
 func (c PropertylistItem) Clone() PropertylistItem {
 	newPropertyItem := c
-	newPropertyItem = c
 	return newPropertyItem
+}
+
+func (c TextOption) Clone() TextOption {
+	newTextOption := c
+	return newTextOption
+}
+
+func (c Selectionlist) Clone() Selectionlist {
+	newSelectionlist := c
+	return newSelectionlist
+}
+
+func (c SelectionlistItem) Clone() SelectionlistItem {
+	newSelectionlistItem := c
+	return newSelectionlistItem
 }
 
 // ChecklistItem represents an item in a checklist
@@ -138,8 +146,8 @@ type PropertylistItem struct {
 }
 
 type TextOption struct {
-	Value      string `json:"value"`
-	BadgeStyle string `json:"badge_style"`
+	Value      string     `json:"value"`
+	BadgeStyle BadgeStyle `json:"badge_style"`
 }
 
 type Selectionlist struct {
