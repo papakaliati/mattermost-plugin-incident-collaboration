@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -694,15 +695,19 @@ func (s *ServiceImpl) ChangePropertyValue(incidentID, userID string, propertyTit
 		return errors.New("invalid propertylist item values")
 	}
 
-	for _, item := range incidentToModify.Propertylist.Items {
+	for i, item := range incidentToModify.Propertylist.Items {
 		if item.Title == propertyTitle {
-			if item.Type == "freetext" {
-				item.Treetext.Value = propertyValue
+			if item.Type == "Freetext" {
+				if err := s.ChangePropertyFreetextValue(incidentID, userID, strconv.Itoa(i), propertyValue); err != nil {
+					return err
+				}
 			}
 			// if selection
-			for _, selection := range item.Selection.Items {
+			for j, selection := range item.Selection.Items {
 				if selection.Value == propertyValue {
-					item.Selection.SelectedId = selection.ID
+					if err := s.ChangePropertySelectionValue(incidentID, userID, strconv.Itoa(i), strconv.Itoa(j)); err != nil {
+						return err
+					}
 				}
 			}
 		}
