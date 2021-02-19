@@ -146,8 +146,9 @@ type PropertylistItem struct {
 }
 
 type TextOption struct {
-	Value      string     `json:"value"`
-	BadgeStyle BadgeStyle `json:"badge_style"`
+	Value         string     `json:"value"`
+	IsMultiselect bool       `json:"is_multiselect"`
+	BadgeStyle    BadgeStyle `json:"badge_style"`
 }
 
 type Selectionlist struct {
@@ -255,4 +256,24 @@ func IsValidChecklistItemState(state string) bool {
 
 func IsValidChecklistItemIndex(checklists []Checklist, checklistNum, itemNum int) bool {
 	return checklists != nil && checklistNum >= 0 && itemNum >= 0 && checklistNum < len(checklists) && itemNum < len(checklists[checklistNum].Items)
+}
+
+func IsValidPropertylistItemParams(propertylist Propertylist, propertyTitle, propertyValue string) bool {
+	var result = true
+	for _, item := range propertylist.Items {
+		if item.Title == propertyTitle {
+			if item.Type == "Freetext" {
+				result = false
+				break
+			}
+			// if selection
+			for _, selection := range item.Selection.Items {
+				if selection.Value == propertyValue {
+					result = false
+					break
+				}
+			}
+		}
+	}
+	return !result
 }

@@ -51,6 +51,7 @@ func NewIncidentHandler(router *mux.Router, incidentService incident.Service, pl
 	incidentsRouter.HandleFunc("/commanders", handler.getCommanders).Methods(http.MethodGet)
 	incidentsRouter.HandleFunc("/channels", handler.getChannels).Methods(http.MethodGet)
 	incidentsRouter.HandleFunc("/checklist-autocomplete", handler.getChecklistAutocomplete).Methods(http.MethodGet)
+	incidentsRouter.HandleFunc("/propertylist-autocomplete", handler.getPropertylistAutocomplete).Methods(http.MethodGet)
 
 	incidentRouter := incidentsRouter.PathPrefix("/{id:[A-Za-z0-9]+}").Subrouter()
 	incidentRouter.HandleFunc("", handler.getIncident).Methods(http.MethodGet)
@@ -572,7 +573,6 @@ func (h *IncidentHandler) changePropertySelectionValue(w http.ResponseWriter, r 
 		HandleError(w, err)
 		return
 	}
-	fmt.Println("ENDED ChangePropertySelectionValue")
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -584,7 +584,7 @@ func (h *IncidentHandler) changePropertyFreetextValue(w http.ResponseWriter, r *
 
 	var params struct {
 		PropertyListItemID string `json:"property_id"`
-		FreetextValue      string `json:"freetext_value"`
+		FreetextValue      string `json:"value"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		HandleErrorWithCode(w, http.StatusBadRequest, "could not decode request body", err)
@@ -742,6 +742,32 @@ func (h *IncidentHandler) getChecklistAutocomplete(w http.ResponseWriter, r *htt
 	}
 
 	data, err := h.incidentService.GetChecklistAutocomplete(incidentID)
+	if err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	ReturnJSON(w, data, http.StatusOK)
+}
+
+// getPropertylistAutocomplete handles the GET /incidents/propertylist-autocomplete api endpoint
+func (h *IncidentHandler) getPropertylistAutocomplete(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	channelID := query.Get("channel_id")
+	userID := r.Header.Get("Mattermost-User-ID")
+
+	incidentID, err := h.incidentService.GetIncidentIDForChannel(channelID)
+	if err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	if err = permissions.ViewIncident(userID, incidentID, h.pluginAPI, h.incidentService); err != nil {
+		HandleErrorWithCode(w, http.StatusForbidden, "user does not have permissions", nil)
+		return
+	}
+
+	data, err := h.incidentService.GetPropertylistAutocomplete(incidentID)
 	if err != nil {
 		HandleError(w, err)
 		return

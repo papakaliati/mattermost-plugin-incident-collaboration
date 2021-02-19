@@ -342,6 +342,9 @@ type Service interface {
 	// ToggleCheckedState checks or unchecks the specified checklist item
 	ToggleCheckedState(incidentID, userID string, checklistNumber, itemNumber int) error
 
+	// ChangePropertyValue checks or unchecks the specified checklist item
+	ChangePropertyValue(incidentID, userID string, propertyTitle, propertyValue string) error
+
 	// SetAssignee sets the assignee for the specified checklist item
 	// Idempotent, will not perform any actions if the checklist item is already assigned to assigneeID
 	SetAssignee(incidentID, userID, assigneeID string, checklistNumber, itemNumber int) error

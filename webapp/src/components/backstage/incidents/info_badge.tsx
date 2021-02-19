@@ -3,12 +3,12 @@
 import React from 'react';
 import { BadgeStyle } from 'src/types/playbook';
 
-import styled, {css} from 'styled-components';
+import styled, { css } from 'styled-components';
 
 interface InfoBadgeProps {
-    text: string;
+    text?: string;
     compact?: boolean;
-    badge_style? : BadgeStyle;
+    badge_style?: BadgeStyle;
 }
 
 const Badge = styled.div<InfoBadgeProps>`
@@ -23,7 +23,8 @@ const Badge = styled.div<InfoBadgeProps>`
     color: var(--center-channel-color-72);
     background-color: var(--center-channel-color-16);
    
-    ${(props) => props.badge_style && css`
+    ${(props) => props.badge_style && props.badge_style.text_color && 
+                 props.badge_style.badge_color && css`
         color: ${props.badge_style.text_color};
         background-color:  ${props.badge_style.badge_color};
     `}

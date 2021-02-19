@@ -96,7 +96,6 @@ export default function PropertySelector(props: Props) {
             return;
         }
 
-
         const propertySelection = propertyOptions.find((option: Option) => option.valueId === props.selectedValueId);
         if (propertySelection) {
             setSelected(propertySelection);

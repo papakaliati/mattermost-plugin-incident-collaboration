@@ -457,7 +457,7 @@ func getPropertyListItem(incident *Incident, propertyID string) (*playbook.Prope
 		}
 	}
 
-	return nil, errors.Wrapf(nil, "failed to find property")
+	return nil, errors.New("failed to find property")
 }
 
 func getSelectionListItem(property *playbook.PropertylistItem, selectionID string) (*playbook.SelectionlistItem, error) {
@@ -467,7 +467,7 @@ func getSelectionListItem(property *playbook.PropertylistItem, selectionID strin
 		}
 	}
 
-	return nil, errors.Wrapf(nil, "failed to find property")
+	return nil, errors.New("failed to find property")
 }
 
 // ChangePropertySelectionValue processes a request from userID to change the property value of type selection
@@ -477,8 +477,6 @@ func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID str
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("new vals %s %s", propertyID, selectionID)
 
 	property, err := getPropertyListItem(incidentToModify, propertyID)
 	if err != nil {
@@ -495,16 +493,40 @@ func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID str
 
 	var oldValue = ""
 	if oldValueID != "" {
-		oldSelection, err := getSelectionListItem(property, oldValueID)
-		if err == nil {
-			oldValue = oldSelection.Value
+		if property.Selection.IsMultiselect {
+			ids := strings.Split(oldValueID, ",")
+			oldValues := []string{}
+			for _, v := range ids {
+				oldSelection, err := getSelectionListItem(property, v)
+				if err == nil {
+					oldValues = append(oldValues, oldSelection.Value)
+				}
+			}
+			oldValue = strings.Join(oldValues, ",")
+		} else {
+			oldSelection, err := getSelectionListItem(property, oldValueID)
+			if err == nil {
+				oldValue = oldSelection.Value
+			}
 		}
 	}
 
 	var newValue = ""
-	newSelection, err := getSelectionListItem(property, selectionID)
-	if err == nil {
-		newValue = newSelection.Value
+	if property.Selection.IsMultiselect {
+		ids := strings.Split(selectionID, ",")
+		var newValues []string
+		for _, v := range ids {
+			newSelection, err := getSelectionListItem(property, v)
+			if err == nil {
+				newValues = append(newValues, newSelection.Value)
+			}
+		}
+		newValue = strings.Join(newValues, ",")
+	} else {
+		newSelection, err := getSelectionListItem(property, selectionID)
+		if err == nil {
+			newValue = newSelection.Value
+		}
 	}
 
 	if err = s.store.UpdateIncident(incidentToModify); err != nil {
@@ -657,6 +679,37 @@ func (s *ServiceImpl) ModifyCheckedState(incidentID, userID, newState string, ch
 	if err = s.sendIncidentToClient(incidentID); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// ChangePropertyValue changes the propertylist value
+func (s *ServiceImpl) ChangePropertyValue(incidentID, userID string, propertyTitle, propertyValue string) error {
+	incidentToModify, err := s.propertylistParamsVerify(incidentID, userID)
+	if err != nil {
+		return err
+	}
+
+	if !playbook.IsValidPropertylistItemParams(incidentToModify.Propertylist, propertyTitle, propertyValue) {
+		return errors.New("invalid propertylist item values")
+	}
+
+	for _, item := range incidentToModify.Propertylist.Items {
+		if item.Title == propertyTitle {
+			if item.Type == "freetext" {
+				item.Treetext.Value = propertyValue
+			}
+			// if selection
+			for _, selection := range item.Selection.Items {
+				if selection.Value == propertyValue {
+					item.Selection.SelectedId = selection.ID
+				}
+			}
+		}
+	}
+
+	s.poster.PublishWebsocketEventToChannel(incidentUpdatedWSEvent, incidentToModify, incidentToModify.ChannelID)
+	s.telemetry.PropertyValueChanged(incidentToModify, userID)
 
 	return nil
 }
@@ -1034,9 +1087,9 @@ func (s *ServiceImpl) GetPropertylistAutocomplete(incidentID string) ([]model.Au
 
 	ret := make([]model.AutocompleteListItem, 0)
 
-	for j, item := range theIncident.Propertylist.Items {
+	for _, item := range theIncident.Propertylist.Items {
 		ret = append(ret, model.AutocompleteListItem{
-			Item:     fmt.Sprintf("%d %d", item.Title, j),
+			Item:     fmt.Sprintf("%s", item.Title),
 			Hint:     fmt.Sprintf("\"%s\"", stripmd.Strip(item.Title)),
 			HelpText: "Check/uncheck this item",
 		})

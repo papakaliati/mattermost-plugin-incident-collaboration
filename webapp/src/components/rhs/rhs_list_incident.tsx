@@ -1,19 +1,22 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useState} from 'react';
-import {useSelector} from 'react-redux';
-import styled, {css} from 'styled-components';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import styled, { css } from 'styled-components';
 
-import {Client4} from 'mattermost-redux/client';
-import {Post} from 'mattermost-redux/types/posts';
-import {GlobalState} from 'mattermost-redux/types/store';
-import {getPost} from 'mattermost-redux/selectors/entities/posts';
+import { Client4 } from 'mattermost-redux/client';
+import { Post } from 'mattermost-redux/types/posts';
+import { GlobalState } from 'mattermost-redux/types/store';
+import { getPost } from 'mattermost-redux/selectors/entities/posts';
 
 import Profile from 'src/components/profile/profile';
 import Duration from 'src/components/duration';
-import {Incident, incidentCurrentStatus} from 'src/types/incident';
-import {lastUpdatedByIncidentId} from 'src/selectors';
+import { Incident, incidentCurrentStatus } from 'src/types/incident';
+import { lastUpdatedByIncidentId } from 'src/selectors';
+import InfoBadge from '../backstage/incidents/info_badge';
+import { PropertyType } from 'src/types/playbook';
+import { InfoMultiSelectionBadge, InfoMultiTextBadge, InfoSelectionBadge } from '../property/property';
 
 const IncidentContainer = styled.div<IncidentContainerProps>`
     display: flex;
@@ -124,16 +127,52 @@ const RHSListIncident = (props: Props) => {
             <Row>
                 <Col1>{'Commander:'}</Col1>
                 <Col2>
-                    <SmallerProfile userId={props.incident.commander_user_id}/>
+                    <SmallerProfile userId={props.incident.commander_user_id} />
                 </Col2>
             </Row>
+
+            {props.incident.propertylist.items.map((item) => {
+                return (
+                    <div key={item.id + item.title}>
+                        <Row>
+                            <Col1>{item.title}</Col1>
+                            <Col2>
+                                {item.type == PropertyType.Selection && item.selection && !item.selection.is_multiselect &&
+                                    <InfoSelectionBadge
+                                        items={item.selection.items}
+                                        value={item.selection.selected_id}
+                                    />
+                                }
+                                {item.type == PropertyType.Selection && item.selection && item.selection.is_multiselect &&
+                                    <InfoMultiSelectionBadge
+                                        items={item.selection.items}
+                                        value={item.selection.selected_id}
+                                    />
+                                }
+                                {item.type == PropertyType.Freetext && item.freetext && item.freetext.is_multiselect &&
+                                    <InfoMultiTextBadge
+                                        value={item.freetext.value}
+                                    />
+                                }
+                                {item.type == PropertyType.Freetext && item.freetext && !item.freetext.is_multiselect &&
+                                    <InfoBadge
+                                        text={item.freetext.value}
+                                        badge_style={item.freetext.badge_style}
+                                        compact={true} />
+                                }
+                            </Col2>
+                        </Row>
+                    </div>
+                );
+            })}
+
             <Button
                 onClick={() => props.viewIncident(props.incident.channel_id)}
                 data-testid='go-to-channel'
             >
                 {'Go to Incident Channel'}
             </Button>
-        </IncidentContainer>
+        </IncidentContainer >
     );
 };
 

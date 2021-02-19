@@ -67,6 +67,7 @@ export interface PropertylistItem {
 
 export interface TextOption {
     value: string
+    is_multiselect: boolean
     badge_style?: BadgeStyle
 }
 
@@ -166,6 +167,7 @@ export function emptySelectionlistItem(): SelectionlistItem {
 export function emptyFreetextOption(): TextOption {
     return {
     value: '',
+    is_multiselect: false,
     badge_style: emptyBadgeStyle()
     };
 }
@@ -232,8 +234,9 @@ export interface TextOption {
     badge_style?: BadgeStyle
 }
 
-export const newFreetextOption = (value='', badge_style = newBadgeStyle()): TextOption => ({
+export const newFreetextOption = (value='', is_multiselect = false, badge_style = newBadgeStyle()): TextOption => ({
     value,
+    is_multiselect,
     badge_style
 });
 

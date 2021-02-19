@@ -7,6 +7,7 @@ import ReactSelect, { ActionTypes, StylesConfig } from 'react-select';
 import './property_selector.scss';
 import { PropertylistItem, SelectionlistItem } from 'src/types/playbook';
 import PropertyView from './property';
+import { ReactSelectStyles } from './property_freetext';
 
 
 interface Option {
@@ -103,26 +104,27 @@ export default function PropertyMultiSelector(props: Props) {
             isMulti
             options={propertyOptions}
             placeholder={'Search'}
-            // styles={selectStyles}
+            style={ReactSelectStyles}
             onChange={(option, action) => onSelectedChange(option as Option, action as ActionObj)}
             value={selectedValues}
             className="basic-multi-select"
+            isClearable={false}
             classNamePrefix="select"
         />
     );
 } 
 
-// styles for the select component
-const selectStyles: StylesConfig = {
-    control: (provided) => ({ ...provided, minWidth: 240, margin: 8 }),
-    // menu: () => ({ boxShadow: 'none' }),
-    option: (provided, state) => {
-        const hoverColor = 'rgba(20, 93, 191, 0.08)';
-        const bgHover = state.isFocused ? hoverColor : 'transparent';
-        return {
-            ...provided,
-            backgroundColor: state.isSelected ? hoverColor : bgHover,
-            color: 'unset',
-        };
-    },
-};   
+// // styles for the select component
+// const selectStyles: StylesConfig = {
+//     control: (provided) => ({ ...provided, minWidth: 240, margin: 8 }),
+//     // menu: () => ({ boxShadow: 'none' }),
+//     option: (provided, state) => {
+//         const hoverColor = 'rgba(20, 93, 191, 0.08)';
+//         const bgHover = state.isFocused ? hoverColor : 'transparent';
+//         return {
+//             ...provided,
+//             backgroundColor: state.isSelected ? hoverColor : bgHover,
+//             color: 'unset',
+//         };
+//     },
+// };   

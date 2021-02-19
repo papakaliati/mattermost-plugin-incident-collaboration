@@ -4,7 +4,7 @@
 import React, { FC } from 'react';
 import Scrollbars from 'react-custom-scrollbars';
 
-import { fetchUsersInChannel, setCommander, setPropertySelectionValue } from 'src/client';
+import { fetchUsersInChannel, setCommander, setPropertyFreetextValue, setPropertySelectionValue } from 'src/client';
 import { Incident, incidentCurrentStatus } from 'src/types/incident';
 import ProfileSelector from 'src/components/profile/profile_selector';
 import Duration from '../duration';
@@ -18,6 +18,8 @@ import LatestUpdate from 'src/components/rhs/latest_update';
 import PropertySelector from '../property/property_selector';
 import { PropertylistItem, PropertyType } from 'src/types/playbook';
 import PropertyMultiSelector from '../property/property_multiselector';
+import { PropertyFreeTextMultiselectItem, PropertyFreeTextItem } from '../property/property_freetext';
+import { Provider } from 'react-redux';
 
 interface Props {
     incident: Incident;
@@ -47,6 +49,13 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
         }
     };
 
+    const onSelectedFreetextChange = async (propertyId: string, value: string) => {
+        const response = await setPropertyFreetextValue(props.incident.id, propertyId, value);
+        if (response.error) {
+            console.log(response.error); // eslint-disable-line no-console
+        }
+    };
+
     const onMultiSelectedPropertyChange = async (propertyId: string, valueId: string[]) => {
         const response = await setPropertySelectionValue(props.incident.id, propertyId, valueId.join());
         if (response.error) {
@@ -54,7 +63,6 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
             console.log(response.error); // eslint-disable-line no-console
         }
     };
-
 
     return (
         <Scrollbars
@@ -104,17 +112,31 @@ const RHSIncidentSummary: FC<Props> = (props: Props) => {
 
                 {props.incident.propertylist && props.incident.propertylist.items && props.incident.propertylist.items.map((property) => {
                     return (
-                        <div className='inner-container first-container'>
+                        <div className='inner-container first-container' key={property.id + property.title}>
                             <div className='first-title'>{property.title}</div>
 
-                            { property.freetext &&
+                            { property.freetext && property.freetext.is_multiselect &&
                                 property.type === PropertyType.Freetext &&
-                                <div>{property.freetext.value}</div>
+                                <PropertyFreeTextMultiselectItem
+                                    value={property.freetext.value}
+                                    propertyId={property.id}
+                                    onSelectedChange={onSelectedFreetextChange}
+                                />
                             }
 
-                            { property.selection &&
-                                property.type === PropertyType.Selection &&
-                                !property.selection.is_multiselect &&
+                            { property.freetext && 
+                              !property.freetext.is_multiselect &&
+                              property.type === PropertyType.Freetext &&
+                                <PropertyFreeTextItem
+                                    title={property.freetext.value}
+                                    propertyId={property.id}
+                                    onSelectedChange={onSelectedFreetextChange}
+                                />
+                            }
+
+                            { property.selection && 
+                              property.type === PropertyType.Selection &&
+                              !property.selection.is_multiselect &&
                                 <PropertySelector
                                     selectedValueId={property.selection.selected_id}
                                     property={property}

@@ -26,6 +26,7 @@ const helpText = "###### Mattermost Incident Collaboration Plugin - Slash Comman
 	"* `/incident end` - Close the incident of that channel. \n" +
 	"* `/incident update` - Update the incident's status and (if enabled) post the status update to the broadcast channel. \n" +
 	"* `/incident check [checklist #] [item #]` - check/uncheck the checklist item. \n" +
+	"* `/incident property [checklist name] [item value]` - Change propertylist item value. \n" +
 	"* `/incident commander [@username]` - Show or change the current commander. \n" +
 	"* `/incident announce ~[channels]` - Announce the current incident in other channels. \n" +
 	"* `/incident list` - List all your incidents. \n" +
@@ -81,6 +82,13 @@ func getAutocompleteData(addTestCommands bool) *model.AutocompleteData {
 		"List of checklist items is downloading from your Incident Collaboration plugin",
 		"api/v0/incidents/checklist-autocomplete", true)
 	slashIncident.AddCommand(checklist)
+
+	propertylist := model.NewAutocompleteData("property", "[propertylist item]",
+		"Checks or unchecks a propertylist item.")
+	propertylist.AddDynamicListArgument(
+		"List of propertlist items is downloading from your Incident Collaboration plugin",
+		"api/v0/incidents/propertylist-autocomplete", true)
+	slashIncident.AddCommand(propertylist)
 
 	announce := model.NewAutocompleteData("announce", "~[channels]",
 		"Announce the current incident in other channels.")
@@ -245,6 +253,31 @@ func (r *Runner) actionCheck(args []string) {
 	}
 
 	err = r.incidentService.ToggleCheckedState(incidentID, r.args.UserId, checklist, item)
+	if err != nil {
+		r.warnUserAndLogErrorf("Error checking/unchecking item: %v", err)
+	}
+}
+
+func (r *Runner) propertyActionCheck(args []string) {
+	if len(args) != 2 {
+		r.postCommandResponse(helpText)
+		return
+	}
+
+	propertyTitle := args[0]
+	propertyValue := args[1]
+
+	incidentID, err := r.incidentService.GetIncidentIDForChannel(r.args.ChannelId)
+	if err != nil {
+		if errors.Is(err, incident.ErrNotFound) {
+			r.postCommandResponse("You can only check/uncheck an item from within the incident's channel.")
+			return
+		}
+		r.warnUserAndLogErrorf("Error retrieving incident: %v", err)
+		return
+	}
+
+	err = r.incidentService.ChangePropertyValue(incidentID, r.args.UserId, propertyTitle, propertyValue)
 	if err != nil {
 		r.warnUserAndLogErrorf("Error checking/unchecking item: %v", err)
 	}
@@ -1196,6 +1229,8 @@ func (r *Runner) Execute() error {
 		r.actionUpdate()
 	case "check":
 		r.actionCheck(parameters)
+	case "property":
+		r.propertyActionCheck(parameters)
 	case "restart":
 		r.actionRestart()
 	case "commander":

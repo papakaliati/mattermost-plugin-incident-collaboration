@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 
 import styled from 'styled-components';
 
@@ -46,7 +46,6 @@ const PropertyInput = styled.input`
         box-shadow: inset 0 0 0 2px var(--button-bg);
     }
 `;
-
 
 interface TitleProps {
     title: string;
@@ -140,37 +139,6 @@ export const ComboboxItem: FC<ComboboxItemProps> = (props: ComboboxItemProps) =>
 };
 
 
-// interface ComboboxItemProps {
-//     type: PropertyType;
-//     setType: (item: PropertyType) => void;
-// }
-
-// export const ComboboxItem: FC<ComboboxItemProps> = (props: ComboboxItemProps) => {
-
-//     return (
-//         <div className="App">
-//             <select
-//                 value={props.type}
-//                 onChange={(e) => {
-//                     let option: PropertyType;
-//                     if (e.target.value === "Freetext") {
-//                         option = PropertyType.Freetext;
-//                     }
-//                     else {
-//                         option = PropertyType.Selection;
-//                     }
-//                     props.setType(option);
-//                 }}>
-//                 {Object.keys(PropertyType).map(key => (
-//                     <option key={key} value={key}>
-//                         {key}
-//                     </option>
-//                 ))}
-//             </select>
-//         </div >
-//     );
-// };
-
 
 const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => {
     const submit = (propertylistItem: PropertylistItem) => {
@@ -203,6 +171,18 @@ const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => 
                             submit({ ...props.property, type })
                         }}
                     />
+                    {props.property.type === PropertyType.Freetext && props.property.freetext &&
+                        <CheckboxItem
+                            title='Is Multiselect'
+                            checked={props.property.freetext.is_multiselect}
+                            setChecked={(is_multiselect) => {
+                                if (props.property.freetext)
+                                    props.property.freetext.is_multiselect = is_multiselect;
+                                submit({ ...props.property })
+                            }}
+                        />
+                    }
+
                     {props.property.type === PropertyType.Selection && props.property.selection &&
                         <>
                             <CheckboxItem
@@ -214,23 +194,6 @@ const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => 
                                     submit({ ...props.property })
                                 }}
                             />
-                            {/* <ComboboxItem
-                            option={props.property.selection.type}
-                            options={Object.keys(SelectionType)}
-                            setOption={(option) => {
-                                let type: SelectionType;
-                                if (option === "Singleselect") {
-                                    type = SelectionType.Singleselect;
-                                }
-                                else {
-                                    type = SelectionType.Multiselect;
-                                }
-                                if(props.property.selection)
-                                    props.property.selection.type = type;
-                                    
-                                submit({ ...props.property})
-                        }}
-                /> */}
                             <PropertySelectionlistEditor
                                 key={props.property.id}
                                 selectionlist={props.property.selection}
