@@ -547,7 +547,7 @@ func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID str
 		CreateAt:      post.CreateAt,
 		EventAt:       post.CreateAt,
 		EventType:     PropertyValueChanged,
-		Summary:       fmt.Sprintf("@%s to @%s", oldValue, newValue),
+		Summary:       fmt.Sprintf("'**%s**' changed to **%s**", propertyTitle, newValue),
 		PostID:        post.Id,
 		SubjectUserID: userID,
 	}
@@ -593,7 +593,7 @@ func (s *ServiceImpl) ChangePropertyFreetextValue(incidentID string, userID stri
 	}
 
 	mainChannelID := incidentToModify.ChannelID
-	modifyMessage := fmt.Sprintf("changed the incident property '**@%s**' from **@%s** to **@%s**.",
+	modifyMessage := fmt.Sprintf("changed the incident property '**%s**' from **%s** to **%s**.",
 		propertyTitle, oldValue, newValue)
 	post, err := s.modificationMessage(userID, mainChannelID, modifyMessage)
 	if err != nil {
@@ -605,7 +605,7 @@ func (s *ServiceImpl) ChangePropertyFreetextValue(incidentID string, userID stri
 		CreateAt:      post.CreateAt,
 		EventAt:       post.CreateAt,
 		EventType:     PropertyValueChanged,
-		Summary:       fmt.Sprintf("@%s to @%s", oldValue, newValue),
+		Summary:       fmt.Sprintf("'**%s**' changed to **%s**", propertyTitle, newValue),
 		PostID:        post.Id,
 		SubjectUserID: userID,
 	}

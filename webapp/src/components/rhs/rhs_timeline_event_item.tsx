@@ -2,17 +2,17 @@
 // See LICENSE.txt for license information.
 
 import React from 'react';
-import {useDispatch} from 'react-redux';
+import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import moment, {duration, Moment} from 'moment';
-import {Team} from 'mattermost-redux/types/teams';
+import moment, { duration, Moment } from 'moment';
+import { Team } from 'mattermost-redux/types/teams';
 
-import {TimelineEvent, TimelineEventType} from 'src/types/rhs';
-import {isMobile} from 'src/mobile';
-import {toggleRHS} from 'src/actions';
-import {ChannelNamesMap} from 'src/types/backstage';
-import {messageHtmlToComponent, formatText} from 'src/components/shared';
-import {renderDuration} from 'src/components/duration';
+import { TimelineEvent, TimelineEventType } from 'src/types/rhs';
+import { isMobile } from 'src/mobile';
+import { toggleRHS } from 'src/actions';
+import { ChannelNamesMap } from 'src/types/backstage';
+import { messageHtmlToComponent, formatText } from 'src/components/shared';
+import { renderDuration } from 'src/components/duration';
 
 const Circle = styled.div`
     position: absolute;
@@ -112,44 +112,49 @@ const RHSTimelineEventItem = (props: Props) => {
     let timeSince: JSX.Element | null = <TimeDay>{'Time: ' + renderDuration(diff)}</TimeDay>;
 
     switch (props.event.event_type) {
-    case TimelineEventType.IncidentCreated:
-        iconClass = 'icon icon-shield-alert-outline';
-        summaryTitle = 'Incident Reported by ' + props.event.subject_display_name;
-        timeSince = null;
-        testid = TimelineEventType.IncidentCreated;
-        break;
-    case TimelineEventType.StatusUpdated:
-        iconClass = 'icon icon-flag-outline';
-        if (props.event.summary === '') {
-            summaryTitle = props.event.subject_display_name + ' posted a status update';
-        } else {
-            summaryTitle = props.event.subject_display_name + ' changed status from ' + props.event.summary;
-        }
-        testid = TimelineEventType.StatusUpdated;
-        break;
-    case TimelineEventType.CommanderChanged:
-        iconClass = 'icon icon-pencil-outline';
-        summaryTitle = 'Commander changed from ' + props.event.summary;
-        testid = TimelineEventType.CommanderChanged;
-        break;
-    case TimelineEventType.TaskStateModified:
-        iconClass = 'icon icon-format-list-bulleted';
-        summaryTitle = 'Task Modified';
-        summary = props.event.subject_display_name + ' ' + props.event.summary;
-        testid = TimelineEventType.TaskStateModified;
-        break;
-    case TimelineEventType.AssigneeChanged:
-        iconClass = 'icon icon-pencil-outline';
-        summaryTitle = 'Assignee Changed';
-        summary = props.event.subject_display_name + ' ' + props.event.summary;
-        testid = TimelineEventType.AssigneeChanged;
-        break;
-    case TimelineEventType.RanSlashCommand:
-        iconClass = 'icon icon-pencil-outline';
-        summaryTitle = 'Slash Command Executed';
-        summary = props.event.subject_display_name + ' ' + props.event.summary;
-        testid = TimelineEventType.RanSlashCommand;
-        break;
+        case TimelineEventType.IncidentCreated:
+            iconClass = 'icon icon-shield-alert-outline';
+            summaryTitle = 'Incident Reported by ' + props.event.subject_display_name;
+            timeSince = null;
+            testid = TimelineEventType.IncidentCreated;
+            break;
+        case TimelineEventType.StatusUpdated:
+            iconClass = 'icon icon-flag-outline';
+            if (props.event.summary === '') {
+                summaryTitle = props.event.subject_display_name + ' posted a status update';
+            } else {
+                summaryTitle = props.event.subject_display_name + ' changed status from ' + props.event.summary;
+            }
+            testid = TimelineEventType.StatusUpdated;
+            break;
+        case TimelineEventType.CommanderChanged:
+            iconClass = 'icon icon-pencil-outline';
+            summaryTitle = 'Commander changed from ' + props.event.summary;
+            testid = TimelineEventType.CommanderChanged;
+            break;
+        case TimelineEventType.PropertyValueChanged:
+            iconClass = 'icon icon-pencil-outline';
+            summaryTitle = 'Property ' + props.event.summary;
+            testid = TimelineEventType.PropertyValueChanged;
+            break;
+        case TimelineEventType.TaskStateModified:
+            iconClass = 'icon icon-format-list-bulleted';
+            summaryTitle = 'Task Modified';
+            summary = props.event.subject_display_name + ' ' + props.event.summary;
+            testid = TimelineEventType.TaskStateModified;
+            break;
+        case TimelineEventType.AssigneeChanged:
+            iconClass = 'icon icon-pencil-outline';
+            summaryTitle = 'Assignee Changed';
+            summary = props.event.subject_display_name + ' ' + props.event.summary;
+            testid = TimelineEventType.AssigneeChanged;
+            break;
+        case TimelineEventType.RanSlashCommand:
+            iconClass = 'icon icon-pencil-outline';
+            summaryTitle = 'Slash Command Executed';
+            summary = props.event.subject_display_name + ' ' + props.event.summary;
+            testid = TimelineEventType.RanSlashCommand;
+            break;
     }
 
     return (
@@ -159,7 +164,7 @@ const RHSTimelineEventItem = (props: Props) => {
                 {timeSince}
             </TimeContainer>
             <Circle>
-                <i className={iconClass}/>
+                <i className={iconClass} />
             </Circle>
             <SummaryContainer>
                 <SummaryTitle onClick={(e) => goToPost(e, props.event.post_id)}>

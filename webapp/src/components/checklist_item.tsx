@@ -651,7 +651,7 @@ interface ChecklistItemButtonProps {
     item: ChecklistItem;
 }
 
-const ChecklistItemButton: FC<ChecklistItemButtonProps> = (props: ChecklistItemButtonProps) => {
+export const ChecklistItemButton: FC<ChecklistItemButtonProps> = (props: ChecklistItemButtonProps) => {
     const isChecked = props.item.state === ChecklistItemState.Closed;
 
     return (
