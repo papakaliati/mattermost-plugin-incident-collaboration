@@ -1,33 +1,33 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {FC, useState, useEffect} from 'react';
-import {useSelector} from 'react-redux';
+import React, { FC, useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import qs from 'qs';
 
-import {getCurrentTeam} from 'mattermost-redux/selectors/entities/teams';
-import {GlobalState} from 'mattermost-redux/types/store';
-import {Team} from 'mattermost-redux/types/teams';
+import { getCurrentTeam } from 'mattermost-redux/selectors/entities/teams';
+import { GlobalState } from 'mattermost-redux/types/store';
+import { Team } from 'mattermost-redux/types/teams';
 
 import NoContentPlaybookSvg from 'src/components/assets/no_content_playbooks_svg';
 
-import {FetchPlaybooksNoChecklistReturn, PlaybookNoChecklist, PropertylistItem} from 'src/types/playbook';
-import {navigateToTeamPluginUrl} from 'src/browser_routing';
+import { FetchPlaybooksNoChecklistReturn, PlaybookNoChecklist, PropertylistItem } from 'src/types/playbook';
+import { navigateToTeamPluginUrl } from 'src/browser_routing';
 
-import {deletePlaybook, clientFetchPlaybooks} from 'src/client';
+import { deletePlaybook, clientFetchPlaybooks } from 'src/client';
 
 import DotMenuIcon from 'src/components/assets/icons/dot_menu_icon';
 import TextWithTooltip from 'src/components/widgets/text_with_tooltip';
 import ConfirmModal from 'src/components/widgets/confirmation_modal';
-import TemplateSelector, {PresetTemplate} from 'src/components/backstage/template_selector';
+import TemplateSelector, { PresetTemplate } from 'src/components/backstage/template_selector';
 
 import BackstageListHeader from 'src/components/backstage/backstage_list_header';
 import './playbook.scss';
-import DotMenu, {DropdownMenuItem} from 'src/components/dot_menu';
-import {SortableColHeader} from 'src/components/sortable_col_header';
-import {PaginationRow} from 'src/components/pagination_row';
-import {TEMPLATE_TITLE_KEY, BACKSTAGE_LIST_PER_PAGE} from 'src/constants';
+import DotMenu, { DropdownMenuItem } from 'src/components/dot_menu';
+import { SortableColHeader } from 'src/components/sortable_col_header';
+import { PaginationRow } from 'src/components/pagination_row';
+import { TEMPLATE_TITLE_KEY, BACKSTAGE_LIST_PER_PAGE } from 'src/constants';
 
 import RightDots from 'src/components/assets/right_dots';
 import RightFade from 'src/components/assets/right_fade';
@@ -46,7 +46,7 @@ const PlaybookList: FC = () => {
 
     const currentTeam = useSelector<GlobalState, Team>(getCurrentTeam);
 
-    const [fetchParams, setFetchParams] = useState<{sort: string, direction: string, page: number, per_page: number}>(
+    const [fetchParams, setFetchParams] = useState<{ sort: string, direction: string, page: number, per_page: number }>(
         {
             sort: 'title',
             direction: 'asc',
@@ -59,15 +59,15 @@ const PlaybookList: FC = () => {
         if (fetchParams.sort === colName) {
             // we're already sorting on this column; reverse the direction
             const newSortDirection = fetchParams.direction === 'asc' ? 'desc' : 'asc';
-            setFetchParams({...fetchParams, direction: newSortDirection});
+            setFetchParams({ ...fetchParams, direction: newSortDirection });
             return;
         }
 
-        setFetchParams({...fetchParams, sort: colName, direction: 'asc'});
+        setFetchParams({ ...fetchParams, sort: colName, direction: 'asc' });
     }
 
     function setPage(page: number) {
-        setFetchParams({...fetchParams, page});
+        setFetchParams({ ...fetchParams, page });
     }
 
     const fetchPlaybooks = async () => {
@@ -84,8 +84,8 @@ const PlaybookList: FC = () => {
         navigateToTeamPluginUrl(currentTeam.name, `/playbooks/${playbook.id}`);
     };
 
-    const newPlaybook = (templateTitle?: string|undefined) => {
-        const queryParams = qs.stringify({[TEMPLATE_TITLE_KEY]: templateTitle}, {addQueryPrefix: true});
+    const newPlaybook = (templateTitle?: string | undefined) => {
+        const queryParams = qs.stringify({ [TEMPLATE_TITLE_KEY]: templateTitle }, { addQueryPrefix: true });
         navigateToTeamPluginUrl(currentTeam.name, `/playbooks/new${queryParams}`);
     };
 
@@ -125,7 +125,7 @@ const PlaybookList: FC = () => {
     const deleteSuccessfulBanner = showBanner && (
         <div className='banner'>
             <div className='banner__text'>
-                <i className='icon icon-check mr-1'/>
+                <i className='icon icon-check mr-1' />
                 {`The playbook ${selectedPlaybook?.title} was successfully deleted.`}
             </div>
         </div>
@@ -185,7 +185,7 @@ const PlaybookList: FC = () => {
 
     return (
         <div className='Playbook'>
-            { deleteSuccessfulBanner }
+            { deleteSuccessfulBanner}
             <TemplateSelector
                 onSelect={(template: PresetTemplate) => {
                     newPlaybook(template.title);
@@ -194,17 +194,17 @@ const PlaybookList: FC = () => {
             {
                 (playbooks?.length === 0) &&
                 <>
-                    <NoContentPage onNewPlaybook={newPlaybook}/>
-                    <NoContentPlaybookSvg/>
+                    <NoContentPage onNewPlaybook={newPlaybook} />
+                    <NoContentPlaybookSvg />
                 </>
             }
             {
                 (playbooks && playbooks.length !== 0) &&
                 <>
-                    <RightDots/>
-                    <RightFade/>
-                    <LeftDots/>
-                    <LeftFade/>
+                    <RightDots />
+                    <RightFade />
+                    <LeftDots />
+                    <LeftFade />
                     <div className='playbook-list container-medium'>
                         <div className='Backstage__header'>
                             <div
@@ -221,7 +221,7 @@ const PlaybookList: FC = () => {
                                     className='btn btn-primary'
                                     onClick={() => newPlaybook()}
                                 >
-                                    <i className='icon-plus mr-2'/>
+                                    <i className='icon-plus mr-2' />
                                     {'Create a Playbook'}
                                 </button>
                             </div>
@@ -333,7 +333,7 @@ const Button = styled.button`
     }
 `;
 
-const NoContentPage = (props: {onNewPlaybook: () => void}) => {
+const NoContentPage = (props: { onNewPlaybook: () => void }) => {
     return (
         <Container>
             <Title>{'What is a Playbook?'}</Title>
@@ -342,7 +342,7 @@ const NoContentPage = (props: {onNewPlaybook: () => void}) => {
                 className='mt-6'
                 onClick={() => props.onNewPlaybook()}
             >
-                <i className='icon-plus mr-2'/>
+                <i className='icon-plus mr-2' />
                 {'New Playbook'}
             </Button>
         </Container>
@@ -364,7 +364,7 @@ const PlaybookActionMenu = (props: PlaybookActionMenuProps) => {
         <DotMenu
             icon={
                 <IconWrapper>
-                    <DotMenuIcon/>
+                    <DotMenuIcon />
                 </IconWrapper>
             }
         >

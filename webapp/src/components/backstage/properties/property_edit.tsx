@@ -16,7 +16,7 @@ export interface PropertyEditorProps {
 
 const Container = styled.div`
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     border: 1px solid rgba(var(--center-channel-color-rgb), 0.12);
     border-radius: 4px;
     background-color: var(--center-channel-bg);
@@ -24,7 +24,7 @@ const Container = styled.div`
     margin: 20px;
 `;
 
-const PropertyLine = styled.div`
+const PropertyRow = styled.div`
     display: flex;
     direction: row;
 `;
@@ -50,14 +50,7 @@ const PropertyInput = styled.input`
 
 const InnerContainer = styled.div`
     display: flex;
-    flex-direction: column;
-`;
-
-const ItemContainer = styled.div`
-    padding-top: 1.3rem;
-    :first-child {
-        padding-top: 0.4rem;
-    }
+    flex-direction: row;
 `;
 
 const CheckboxContainer = styled.div`
@@ -156,6 +149,11 @@ const CheckboxContainerLive = styled(CheckboxContainer)`
     height: 35px;
 `;
 
+const PropertyLine = styled.div`
+    display: flex;
+    direction: row;
+`;
+
 interface TitleProps {
     title: string;
     setTitle: (title: string) => void;
@@ -218,23 +216,6 @@ export const CheckboxItem: FC<CheckItemProps> = (props: CheckItemProps) => {
                 {props.title}
             </label>
         </CheckboxContainerLive>
-        // <div>
-        //     <BackstageSubheaderText>
-        //         {props.title}
-        //     </BackstageSubheaderText>
-        //     <input
-        //         className='checkbox'
-        //         type='checkbox'
-        //         checked={props.checked}
-        //         onChange={() => {
-        //             if (props.checked) {
-        //                 props.setChecked(false);
-        //             } else {
-        //                 props.setChecked(true);
-        //             }
-        //         }}
-        //     />
-        // </div>
     );
 };
 
@@ -308,12 +289,10 @@ export const ComboboxItem: FC<ComboboxItemProps> = (props: ComboboxItemProps) =>
 
 const Divider = styled.div`
     padding-bottom: 20px;
+    padding-right:20px;
+    width: 100px;
 `
 
-const Floater = styled.div`
-    float:left;
-
-    `
 const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => {
     const submit = (propertylistItem: PropertylistItem) => {
         props.onUpdate(propertylistItem);
@@ -325,32 +304,27 @@ const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => 
             onTitleChange={(title) => submit({ ...props.property, title })}
         >
             <Container>
-                <PropertyLine>
+                <PropertyRow>
                     <InnerContainer>
 
-                        <div className='side-by-side'>
-                            <div className='inner-container first-container'>
-                                <CheckboxItem
-                                    title='Is Mandatory'
-                                    checked={props.property.is_mandatory}
-                                    setChecked={(is_mandatory) => submit({ ...props.property, is_mandatory })}
+                        <PropertyLine>
+                            <Divider>
+                                <ComboboxItem
+                                    option={props.property.type}
+                                    options={Object.keys(PropertyType)}
+                                    setOption={(option) => {
+                                        let type: PropertyType;
+                                        if (option === "Freetext") {
+                                            type = PropertyType.Freetext;
+                                        }
+                                        else {
+                                            type = PropertyType.Selection;
+                                        }
+                                        submit({ ...props.property, type })
+                                    }}
                                 />
-                                <Divider>
-                                    <ComboboxItem
-                                        option={props.property.type}
-                                        options={Object.keys(PropertyType)}
-                                        setOption={(option) => {
-                                            let type: PropertyType;
-                                            if (option === "Freetext") {
-                                                type = PropertyType.Freetext;
-                                            }
-                                            else {
-                                                type = PropertyType.Selection;
-                                            }
-                                            submit({ ...props.property, type })
-                                        }}
-                                    />
-                                </Divider>
+                            </Divider>
+                            <Divider>
                                 {props.property.type === PropertyType.Freetext && props.property.freetext &&
                                     <CheckboxItem
                                         title='Is Multiselect'
@@ -362,6 +336,8 @@ const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => 
                                         }}
                                     />
                                 }
+                            </Divider>
+                            <Divider>
                                 {props.property.type === PropertyType.Selection && props.property.selection &&
                                     <CheckboxItem
                                         title='Is Multiselect'
@@ -373,24 +349,21 @@ const PropertyEditor: FC<PropertyEditorProps> = (props: PropertyEditorProps) => 
                                         }}
                                     />
                                 }
-                            </div>
-                            <div className='first-title'>
-                                {props.property.type === PropertyType.Selection && props.property.selection &&
-                                    <PropertySelectionlistEditor
-                                        key={props.property.id}
-                                        selectionlist={props.property.selection}
-                                        selectionlistIndex={props.property.selection.selected_id}
-                                        setSelectionlist={(selection: any) => submit({ ...props.property, selection })}
-                                    />
-                                }
-                            </div>
-                        </div>
-
+                            </Divider>
+                            {props.property.type === PropertyType.Selection && props.property.selection &&
+                                <PropertySelectionlistEditor
+                                    key={props.property.id}
+                                    selectionlist={props.property.selection}
+                                    selectionlistIndex={props.property.selection.selected_id}
+                                    setSelectionlist={(selection: any) => submit({ ...props.property, selection })}
+                                />
+                            }
+                        </PropertyLine>
                     </InnerContainer>
 
-                </PropertyLine>
+                </PropertyRow>
             </Container>
-        </CollapsibleSection>
+        </CollapsibleSection >
     );
 };
 

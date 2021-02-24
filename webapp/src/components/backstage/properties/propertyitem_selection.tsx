@@ -91,6 +91,7 @@ export const PropertySelectionlistEditor = (props: Props): React.ReactElement =>
 
     return (
         <>
+            Values
             <Container>
                 <DragDropContext onDragEnd={onDragEnd}>
                     <Droppable

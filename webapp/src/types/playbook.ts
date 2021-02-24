@@ -60,7 +60,6 @@ export interface PropertylistItem {
     id?: string;
     title: string
     type: PropertyType
-    is_mandatory: boolean
     selection?: Selectionlist
     freetext?: TextOption
 }
@@ -142,7 +141,6 @@ export function emptyPropertylistItem(): PropertylistItem {
         id: '',
         title: '',
         type: PropertyType.Freetext,
-        is_mandatory: false,
         selection: emptySelectionlist(),
         freetext: emptyFreetextOption()
     };
@@ -206,7 +204,6 @@ export const newPropertylist = (id = '', title = '', items = [newPropertylistIte
 export const newPropertylistItem = (id = '', title = '', optional = false, type = PropertyType.Freetext, selection = newSelectionlist(), freetext = newFreetextOption()): PropertylistItem => ({
     id,
     title,
-    is_mandatory: optional,
     type,
     selection,
     freetext,

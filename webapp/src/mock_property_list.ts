@@ -8,7 +8,6 @@ export function generatePropertyList(): Propertylist {
                 id: "1",
                 title: 'Region',
                 type: PropertyType.Selection,
-                is_mandatory: false,
                 selection: {
                     items: [
                         {
@@ -33,7 +32,6 @@ export function generatePropertyList(): Propertylist {
                 id: "2",
                 title: 'Stage',
                 type: PropertyType.Freetext,
-                is_mandatory: false,
                 freetext: {
                     value: 'Prod',
                 },
@@ -43,7 +41,6 @@ export function generatePropertyList(): Propertylist {
                 id: "3",
                 title: 'Priority',
                 type: PropertyType.Selection,
-                is_mandatory: false,
                 selection: {
                     items: [
                         {

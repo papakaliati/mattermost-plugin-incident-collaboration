@@ -137,12 +137,11 @@ type GetPlaybooksResults struct {
 
 // PropertylistItem represents an item in a checklist
 type PropertylistItem struct {
-	ID          string        `json:"id"`
-	Title       string        `json:"title"`
-	Type        string        `json:"type"`
-	IsMandatory bool          `json:"is_mandatory"`
-	Selection   Selectionlist `json:"selection"`
-	Treetext    TextOption    `json:"freetext"`
+	ID        string        `json:"id"`
+	Title     string        `json:"title"`
+	Type      string        `json:"type"`
+	Selection Selectionlist `json:"selection"`
+	Treetext  TextOption    `json:"freetext"`
 }
 
 type TextOption struct {

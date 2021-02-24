@@ -547,7 +547,7 @@ func (s *ServiceImpl) ChangePropertySelectionValue(incidentID string, userID str
 		CreateAt:      post.CreateAt,
 		EventAt:       post.CreateAt,
 		EventType:     PropertyValueChanged,
-		Summary:       fmt.Sprintf("'**%s**' changed to **%s**", propertyTitle, newValue),
+		Summary:       fmt.Sprintf("'%s' changed to %s", propertyTitle, newValue),
 		PostID:        post.Id,
 		SubjectUserID: userID,
 	}
@@ -605,7 +605,7 @@ func (s *ServiceImpl) ChangePropertyFreetextValue(incidentID string, userID stri
 		CreateAt:      post.CreateAt,
 		EventAt:       post.CreateAt,
 		EventType:     PropertyValueChanged,
-		Summary:       fmt.Sprintf("'**%s**' changed to **%s**", propertyTitle, newValue),
+		Summary:       fmt.Sprintf("'%s' changed to %s", propertyTitle, newValue),
 		PostID:        post.Id,
 		SubjectUserID: userID,
 	}
